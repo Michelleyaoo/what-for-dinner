@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { Box, Heading, Input, Button, Flex, VStack } from '@chakra-ui/react'
 import Chip from '../components/Chip'
-import './Home.css'
 
 const INGREDIENTS = [
   '🥬 Cabbage',
@@ -27,20 +27,52 @@ function Home() {
   }
 
   return (
-    <div className="home">
-      <div className="home__container">
-        <h1 className="home__title">🥘 What for dinner?</h1>
+    <Box
+      minH="100vh"
+      w="100%"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      px={{ base: 'md' }}
+      py={{ base: 'xl', mobile: 'lg' }}
+    >
+      <VStack 
+        spacing={{ base: '3xl', tablet: '2xl', mobile: 'xl' }}
+        maxW="648px" 
+        w="100%"
+      >
+        <Heading 
+          as="h1" 
+          textStyle="heading"
+          textAlign="center"
+          sx={{
+            '@media (max-width: 768px)': {
+              fontSize: '20px',
+              lineHeight: '24px',
+            },
+            '@media (max-width: 480px)': {
+              fontSize: '24px',
+              lineHeight: '28px',
+            },
+          }}
+        >
+          🥘 What for dinner?
+        </Heading>
 
-        <div className="home__input-section">
-          <input
-            type="text"
-            className="home__input"
+        <VStack spacing="md" w="100%" align="stretch">
+          <Input
             placeholder="what I have in the fridge..."
             value={selectedIngredients.join(', ')}
             readOnly
           />
 
-          <div className="home__chips">
+          <Flex 
+            wrap="wrap" 
+            gap={{ base: 'md', mobile: 'sm' }}
+            justify="center" 
+            align="center"
+            minH={{ base: '104px', mobile: 'auto' }}
+          >
             {INGREDIENTS.map((ingredient) => (
               <Chip
                 key={ingredient}
@@ -49,12 +81,14 @@ function Home() {
                 isSelected={selectedIngredients.includes(ingredient)}
               />
             ))}
-          </div>
-        </div>
+          </Flex>
+        </VStack>
 
-        <button className="home__button">Let's cook!</button>
-      </div>
-    </div>
+        <Button w={{ base: '240px', mobile: '100%' }} maxW={{ mobile: '240px' }}>
+          Let's cook!
+        </Button>
+      </VStack>
+    </Box>
   )
 }
 

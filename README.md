@@ -41,17 +41,22 @@ npm run preview
 what-for-dinner/
 ├── src/
 │   ├── components/
-│   │   ├── Chip.jsx       # Ingredient chip component
-│   │   └── Chip.css
+│   │   └── Chip.jsx       # Ingredient chip component
 │   ├── pages/
-│   │   ├── Home.jsx       # Home page component
-│   │   └── Home.css
-│   ├── App.jsx            # Main app component
-│   ├── App.css
-│   ├── main.jsx           # Entry point
-│   └── index.css          # Global styles
+│   │   └── Home.jsx       # Home page component
+│   ├── theme/
+│   │   └── index.js       # Chakra UI theme configuration
+│   ├── App.jsx            # Main app component with ChakraProvider
+│   └── main.jsx           # Entry point
 ├── index.html
 ├── package.json
 └── vite.config.js
 ```
+
+## Tech Stack
+
+- **React** - UI library
+- **Vite** - Build tool and dev server
+- **Chakra UI** - Component library with custom theme
+- **Emotion** - CSS-in-JS (required by Chakra UI)
 
