@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Box, Heading, Input, Button, Flex, VStack } from '@chakra-ui/react'
+import { useNavigate } from 'react-router-dom'
+import { Box, Heading, Input, Flex, VStack } from '@chakra-ui/react'
 import Chip from '../components/Chip'
+import Button from '../components/Button'
 
 const INGREDIENTS = [
   '🥬 Cabbage',
@@ -16,6 +18,7 @@ const INGREDIENTS = [
 ]
 
 function Home() {
+  const navigate = useNavigate()
   const [selectedIngredients, setSelectedIngredients] = useState([])
 
   const toggleIngredient = (ingredient) => {
@@ -26,6 +29,10 @@ function Home() {
     )
   }
 
+  const handleCook = () => {
+    navigate('/results')
+  }
+
   return (
     <Box
       minH="100vh"
@@ -33,34 +40,34 @@ function Home() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      px={{ base: 'md' }}
-      py={{ base: 'xl', mobile: 'lg' }}
+      px={{ base: '4' }}
+      py={{ base: '5', md: '10' }}
     >
       <VStack 
-        spacing={{ base: '3xl', tablet: '2xl', mobile: 'xl' }}
-        maxW="648px" 
+        spacing={{ base: '10', md: '14', lg: '20' }}
+        maxW="40.5rem" 
         w="100%"
       >
         <Heading 
           as="h1" 
           textStyle="heading"
           textAlign="center"
+          color="neutral.ink"
           sx={{
-            '@media (max-width: 768px)': {
-              fontSize: '20px',
-              lineHeight: '24px',
+            '@media (max-width: 47.9375rem)': { // md breakpoint - 1
+              textStyle: 'title2',
             },
-            '@media (max-width: 480px)': {
-              fontSize: '24px',
-              lineHeight: '28px',
+            '@media (max-width: 29.9375rem)': { // sm breakpoint - 1
+              textStyle: 'title1',
             },
           }}
         >
           🥘 What for dinner?
         </Heading>
 
-        <VStack spacing="md" w="100%" align="stretch">
+        <VStack spacing="4" w="100%" align="stretch">
           <Input
+            variant="outline"
             placeholder="what I have in the fridge..."
             value={selectedIngredients.join(', ')}
             readOnly
@@ -68,10 +75,10 @@ function Home() {
 
           <Flex 
             wrap="wrap" 
-            gap={{ base: 'md', mobile: 'sm' }}
+            gap={{ base: '3', md: '4' }}
             justify="center" 
             align="center"
-            minH={{ base: '104px', mobile: 'auto' }}
+            minH={{ base: 'auto', md: '26' }}
           >
             {INGREDIENTS.map((ingredient) => (
               <Chip
@@ -84,7 +91,13 @@ function Home() {
           </Flex>
         </VStack>
 
-        <Button w={{ base: '240px', mobile: '100%' }} maxW={{ mobile: '240px' }}>
+        <Button 
+          variant="primary"
+          icon={false}
+          w={{ base: '100%', md: '60' }} 
+          maxW={{ base: '60' }}
+          onClick={handleCook}
+        >
           Let's cook!
         </Button>
       </VStack>

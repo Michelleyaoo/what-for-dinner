@@ -1,4 +1,4 @@
-import { Box } from '@chakra-ui/react'
+import { Tag } from '@chakra-ui/react'
 
 function Chip({ 
   text, 
@@ -7,62 +7,48 @@ function Chip({
   isSelected = false, 
   size = 'Big' 
 }) {
-  const isSmall = size === 'Small'
-  const fontSize = isSmall ? '14px' : '16px'
-  const lineHeight = isSmall ? '18px' : '20px'
+  const tagSize = size === 'Small' ? 'sm' : 'md'
+  const variant = isSelected ? 'selected' : 'default'
+  const gap = onRemove ? (size === 'Small' ? '2' : '4') : '0'
   
   return (
-    <Box
+    <Tag.Root
+      variant={variant}
+      size={tagSize}
       as="button"
       onClick={onClick}
-      px="md"
-      py="sm"
-      borderRadius="md"
-      fontSize={fontSize}
-      lineHeight={lineHeight}
-      fontWeight={500}
-      whiteSpace="nowrap"
-      cursor="pointer"
-      transition="all 0.2s ease"
       display="flex"
       alignItems="center"
-      gap={onRemove ? "xs" : "0"}
-      bg={isSelected ? 'primary.100' : 'primary.50'}
-      border="1px solid"
-      borderColor={isSelected ? 'primary.100' : 'primary.100'}
-      color="neutral.ink"
-      _hover={{
-        bg: isSelected ? 'primary.300' : 'neutral.borderHover',
-        borderColor: isSelected ? 'primary.300' : 'primary.200',
-      }}
+      gap={gap}
     >
-      <Box as="span">{text}</Box>
+      <Tag.Label>{text}</Tag.Label>
       {onRemove && (
-        <Box
-          as="button"
-          aria-label="Remove"
-          onClick={(e) => {
-            e.stopPropagation()
-            onRemove()
-          }}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          w="16px"
-          h="16px"
-          minW="16px"
-          fontSize="md"
-          lineHeight="1"
-          color="grey.700"
-          _hover={{
-            color: 'neutral.ink',
-          }}
-          transition="color 0.2s ease"
-        >
-          ×
-        </Box>
+        <Tag.EndElement>
+          <Tag.CloseTrigger
+            aria-label="Remove"
+            onClick={(e) => {
+              e.stopPropagation()
+              onRemove()
+            }}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            w="4"
+            h="4"
+            minW="4"
+            fontSize="md"
+            lineHeight="1"
+            color="grey.700"
+            _hover={{
+              color: 'neutral.ink',
+            }}
+            transition="color 0.2s ease"
+          >
+            ×
+          </Tag.CloseTrigger>
+        </Tag.EndElement>
       )}
-    </Box>
+    </Tag.Root>
   )
 }
 
