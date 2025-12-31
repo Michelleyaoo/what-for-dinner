@@ -40,10 +40,15 @@ const config = defineConfig({
         sm: { value: '8px' },
         md: { value: '24px' },
         lg: { value: '32px' },
+        xl: { value: '40px' },
       },
       fonts: {
         heading: { value: `'Work Sans', sans-serif` },
         body: { value: `'Work Sans', sans-serif` },
+      },
+      shadows: {
+        card: { value: '0 2px 8px rgba(0, 0, 0, 0.1)' },
+        cardHover: { value: '0 4px 16px rgba(0, 0, 0, 0.1)' },
       },
     },
     textStyles: {
@@ -306,9 +311,10 @@ const config = defineConfig({
         sizes: {
           sm: {
             root: {
-              px: '4',
-              py: '3',
+              px: '3',
+              py: '1.5',
               borderRadius: 'md',
+              height: 'auto',
             },
             label: {
               textStyle: 'subheadMedium',
@@ -319,6 +325,7 @@ const config = defineConfig({
               px: '4',
               py: '3',
               borderRadius: 'md',
+              height: 'auto',
             },
             label: {
               textStyle: 'headlineMedium',

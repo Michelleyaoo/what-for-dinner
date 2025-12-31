@@ -13,61 +13,71 @@ const recipes = [
     id: 1,
     title: 'Tomato and egg stir fry',
     prepTime: '20 mins',
-    ingredients: ['🍅 Tomato', '🥚 Egg']
+    ingredients: ['🍅 Tomato', '🥚 Egg'],
+    image: '1'
   },
   {
     id: 2,
     title: 'Cozy beef stew',
     prepTime: '45 mins',
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef', '🥕 Carrot']
+    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef', '🥕 Carrot'],
+    image: '2'
   },
   {
     id: 3,
     title: 'Thai red curry with beef',
     prepTime: '30 mins',
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef']
+    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef'],
+    image: '3'
   },
   {
     id: 4,
     title: 'Thai red curry with beef',
     prepTime: '30 mins',
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef']
+    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef'],
+    image: '3'
   },
   {
     id: 5,
     title: 'Thai red curry with beef',
     prepTime: '30 mins',
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef']
+    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef'],
+    image: '3'
   },
   {
     id: 6,
     title: 'Tomato and egg stir fry',
     prepTime: '20 mins',
-    ingredients: ['🍅 Tomato', '🥚 Egg']
+    ingredients: ['🍅 Tomato', '🥚 Egg'],
+    image: '1'
   },
   {
     id: 7,
     title: 'Cozy beef stew',
     prepTime: '45 mins',
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef', '🥕 Carrot']
+    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef', '🥕 Carrot'],
+    image: '2'
   },
   {
     id: 8,
     title: 'Thai red curry with beef',
     prepTime: '30 mins',
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef']
+    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef'],
+    image: '3'
   },
   {
     id: 9,
     title: 'Thai red curry with beef',
     prepTime: '30 mins',
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef']
+    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef'],
+    image: '3'
   },
   {
     id: 10,
     title: 'Thai red curry with beef',
     prepTime: '30 mins',
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef']
+    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef'],
+    image: '3'
   }
 ]
 
@@ -97,8 +107,9 @@ function ResultList() {
         pb={0}
       >
         <Flex
-          align="center"
-          justify="space-between"
+          direction={{ base: 'column', md: 'row' }}
+          align={{ base: 'stretch', md: 'center' }}
+          justify={{ base: 'flex-start', md: 'space-between' }}
           gap="4"
         >
           {/* Back Button */}
@@ -106,14 +117,15 @@ function ResultList() {
             variant="tertiary"
             icon={true}
             onClick={handleBack}
+            alignSelf={{ base: 'flex-start', md: 'auto' }}
           >
             Back
           </Button>
 
           {/* Selected Ingredients Chips */}
           <Box
-            flex="1"
-            maxW="45rem"
+            flex={{ base: '0', md: '1' }}
+            maxW={{ base: '100%', md: '45rem' }}
           >
             <Box
               bg="white"
@@ -134,16 +146,17 @@ function ResultList() {
                   text={ingredient}
                   size="Small"
                   isSelected={true}
-                  onRemove={() => handleRemoveIngredient(ingredient)}
+                  onClick={() => handleRemoveIngredient(ingredient)}
                 />
               ))}
             </Box>
           </Box>
 
-          {/* Empty space placeholder (for alignment) */}
+          {/* Empty space placeholder (for alignment on desktop only) */}
           <Box
             w="30"
             visibility="hidden"
+            display={{ base: 'none', md: 'block' }}
           />
         </Flex>
       </Container>
@@ -175,17 +188,18 @@ function ResultList() {
               base: 'repeat(1, 1fr)',      // < sm (< 480px): 1 card
               sm: 'repeat(2, 1fr)',        // sm-md (480px-768px): 2 cards
               md: 'repeat(3, 1fr)',        // md-xl (768px-1280px): 3 cards
-              xl: 'repeat(4, 1fr)',        // xl-2xl (1280px-1536px): 4 cards
-              '2xl': 'repeat(5, 1fr)'      // > 2xl (> 1536px): 5 cards
+              xl: 'repeat(4, 1fr)',        // > xl (> 1280px): 4 cards max
             }}
             gap={{ base: '4', md: '8' }}
           >
             {recipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
+                id={recipe.id}
                 title={recipe.title}
                 prepTime={recipe.prepTime}
                 ingredients={recipe.ingredients}
+                image={recipe.image}
               />
             ))}
           </Box>

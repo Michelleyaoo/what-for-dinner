@@ -1,12 +1,18 @@
+import { useNavigate } from 'react-router-dom'
 import { Box, Flex, VStack, HStack } from '@chakra-ui/react'
 import { Clock } from 'phosphor-react'
 import Label from './Label'
+import Image from './Image'
 
 function RecipeCard({ 
+  id,
   title = "Tomato and egg stir fry",
   prepTime = "20 mins",
-  ingredients = []
+  ingredients = [],
+  image = "1"
 }) {
+  const navigate = useNavigate()
+
   // Normalize ingredients to handle both string arrays and object arrays
   const normalizedIngredients = ingredients.map((ingredient) => {
     if (typeof ingredient === 'string') {
@@ -14,6 +20,13 @@ function RecipeCard({
     }
     return ingredient
   })
+
+  const handleClick = () => {
+    if (id) {
+      navigate(`/recipe/${id}`)
+    }
+  }
+
   return (
     <Box
       bg="white"
@@ -24,16 +37,16 @@ function RecipeCard({
       w="100%"
       display="flex"
       flexDirection="column"
+      cursor="pointer"
+      transition="all 0.2s ease"
+      _hover={{
+        transform: 'translateY(-4px)',
+        boxShadow: 'card',
+      }}
+      onClick={handleClick}
     >
-      {/* Image placeholder */}
-      <Box
-        w="100%"
-        h="50"
-        bg="grey.50"
-        position="relative"
-      >
-        {/* Placeholder for image - will be replaced later */}
-      </Box>
+      {/* Recipe Image */}
+      <Image image={image} alt={title} />
 
       {/* Content */}
       <VStack
