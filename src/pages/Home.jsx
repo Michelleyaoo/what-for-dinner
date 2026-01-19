@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Heading, Flex, VStack, Text } from '@chakra-ui/react'
 import Chip from '../components/Chip'
 import Button from '../components/Button'
+import { removeEmojiFromIngredient, ingredientsToUrlParam } from '../utils/ingredients'
 
 const INGREDIENTS = [
   '🥬 Cabbage',
@@ -20,6 +21,7 @@ const INGREDIENTS = [
 function Home() {
   const navigate = useNavigate()
   const [selectedIngredients, setSelectedIngredients] = useState([])
+  const [error, setError] = useState(null)
 
   const toggleIngredient = (ingredient) => {
     setSelectedIngredients((prev) =>
@@ -27,10 +29,32 @@ function Home() {
         ? prev.filter((item) => item !== ingredient)
         : [...prev, ingredient]
     )
+    // Clear error when user changes selection
+    if (error) setError(null)
   }
 
   const handleCook = () => {
-    navigate('/results')
+    // Validate selection
+    if (selectedIngredients.length === 0) {
+      setError('Please select at least one ingredient')
+      return
+    }
+
+    // Remove emojis from ingredients for API call
+    const cleanIngredients = selectedIngredients.map(removeEmojiFromIngredient)
+    
+    // Navigate to results immediately - loading will happen there
+    const ingredientsParam = ingredientsToUrlParam(cleanIngredients)
+    navigate(`/results?ingredients=${ingredientsParam}`, {
+      state: {
+        searchParams: {
+          ingredients: cleanIngredients,
+          maxPrepTime: 30,
+          servings: 2,
+          dietaryPreferences: ['none']
+        }
+      }
+    })
   }
 
   return (
@@ -125,12 +149,32 @@ function Home() {
           </Flex>
         </VStack>
 
+        {/* Error Message */}
+        {error && (
+          <Box
+            bg="red.50"
+            border="1px solid"
+            borderColor="red.200"
+            borderRadius="md"
+            px="4"
+            py="3"
+            w="100%"
+            maxW="60"
+          >
+            <Text textStyle="bodyRegular" color="red.600" textAlign="center">
+              {error}
+            </Text>
+          </Box>
+        )}
+
         <Button 
           variant="primary"
           icon={false}
           w={{ base: '100%', md: '60' }} 
           maxW={{ base: '60' }}
           onClick={handleCook}
+          disabled={selectedIngredients.length === 0}
+          opacity={selectedIngredients.length === 0 ? 0.6 : 1}
         >
           Let's cook!
         </Button>

@@ -1,13 +1,26 @@
-import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Box, Flex, VStack, HStack, Container } from '@chakra-ui/react'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { Box, Flex, VStack, HStack, Container, Text } from '@chakra-ui/react'
 import { Clock, ArrowLeft, ArrowRight } from 'phosphor-react'
 import Button from '../components/Button'
 import Label from '../components/Label'
 import Image from '../components/Image'
 import ShortVideo from '../components/ShortVideo'
+import RecipeDetailSkeleton from '../components/RecipeDetailSkeleton'
+import { getRecipeDetails, getErrorMessage } from '../utils/api'
+import { ingredientsToUrlParam } from '../utils/ingredients'
+import { getDetailsCacheKey, saveToCache, getFromCache } from '../utils/recipeCache'
 
-// Mock recipe data - keyed by recipe ID
+// Mock video data - TODO: Integrate TikTok/Instagram API
+const mockVideos = [
+  { id: 1, thumbnail: null, link: 'https://example.com/video1' },
+  { id: 2, thumbnail: null, link: 'https://example.com/video2' },
+  { id: 3, thumbnail: null, link: 'https://example.com/video3' },
+  { id: 4, thumbnail: null, link: 'https://example.com/video4' },
+  { id: 5, thumbnail: null, link: 'https://example.com/video5' }
+]
+
+// Keep old mock data for fallback (will be removed later)
 const recipeData = {
   1: {
     id: 1,
@@ -128,15 +141,85 @@ const recipeData = {
 
 function RecipeDetail() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
+  
+  const [recipe, setRecipe] = useState(null)
+  const [recipeDetails, setRecipeDetails] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
 
-  // Get recipe data
-  const recipe = recipeData[id] || recipeData[1]
+  useEffect(() => {
+    // Get recipe from navigation state
+    const recipeFromState = location.state?.recipe
+    const searchContext = location.state?.searchContext
+
+    if (!recipeFromState) {
+      // No recipe in state, redirect to home
+      navigate('/')
+      return
+    }
+
+    setRecipe(recipeFromState)
+    fetchRecipeDetails(recipeFromState, searchContext)
+  }, [id, location.state, navigate])
+
+  const fetchRecipeDetails = async (recipeData, searchContext) => {
+    // Check cache first
+    const cacheKey = getDetailsCacheKey(recipeData.id)
+    const cachedDetails = getFromCache(cacheKey)
+    
+    if (cachedDetails) {
+      console.log('✨ Using cached recipe details')
+      setRecipeDetails(cachedDetails)
+      setIsLoading(false)
+      return // Skip API call!
+    }
+
+    // If not in cache, fetch from API
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      // Prepare context for API call
+      const context = {
+        recipeId: recipeData.id,
+        recipeTitle: recipeData.title,
+        ingredients: searchContext?.ingredients || [],
+        matchedIngredients: recipeData.matchedIngredients || [],
+        additionalIngredients: recipeData.additionalIngredients || [],
+        servings: searchContext?.servings || 2,
+        maxPrepTime: searchContext?.maxPrepTime
+      }
+
+      const details = await getRecipeDetails(context)
+      setRecipeDetails(details)
+
+      // Save to cache
+      saveToCache(cacheKey, details)
+      console.log('💾 Saved recipe details to cache')
+    } catch (err) {
+      console.error('Error fetching recipe details:', err)
+      setError(getErrorMessage(err))
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleBack = () => {
-    navigate(-1)
+    // Get ingredients from search context to navigate back to results
+    const recipeFromState = location.state?.recipe
+    const searchContext = location.state?.searchContext
+    
+    if (searchContext?.ingredients) {
+      const ingredientsParam = ingredientsToUrlParam(searchContext.ingredients)
+      navigate(`/results?ingredients=${ingredientsParam}`)
+    } else {
+      // Fallback to browser back if no context
+      navigate(-1)
+    }
   }
 
   const handlePrevVideo = () => {
@@ -145,12 +228,56 @@ function RecipeDetail() {
 
   const handleNextVideo = () => {
     setCurrentVideoIndex((prev) => 
-      Math.min(recipe.videos.length - 1, prev + 1)
+      Math.min(mockVideos.length - 1, prev + 1)
     )
   }
 
   const toggleInstructions = () => {
     setIsExpanded(!isExpanded)
+  }
+
+  // Loading state - show skeleton
+  if (isLoading || !recipe) {
+    return <RecipeDetailSkeleton />
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Box minH="100vh" w="100%" bg="neutral.background">
+        <Container maxW="1440px" px={{ base: '4', md: '10' }} pt={{ base: '4', md: '12' }}>
+          <Button variant="tertiary" icon={true} onClick={handleBack}>
+            Back
+          </Button>
+        </Container>
+        <Container maxW="800px" px={{ base: '4', md: '10' }} pt="10">
+          <Box
+            bg="red.50"
+            border="1px solid"
+            borderColor="red.200"
+            borderRadius="lg"
+            px="6"
+            py="4"
+            textAlign="center"
+          >
+            <Text textStyle="bodyRegular" color="red.600" mb="3">
+              {error}
+            </Text>
+            <Button variant="secondary" onClick={handleBack}>
+              Go Back
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    )
+  }
+
+  // Combine recipe list data with fetched details
+  const fullRecipe = {
+    ...recipe,
+    ...recipeDetails,
+    videos: mockVideos, // TODO: Use videoSearchTerms to fetch real videos
+    servings: recipeDetails?.servings || 2
   }
 
   return (
@@ -208,8 +335,8 @@ function RecipeDetail() {
           >
             {/* Hero Image */}
             <Image 
-              image={recipe.image}
-              alt={recipe.title}
+              image={fullRecipe.image || '1'}
+              alt={fullRecipe.title}
               h="320px"
               borderRadius="lg"
             />
@@ -228,7 +355,7 @@ function RecipeDetail() {
                 textStyle="title1"
                 color="neutral.ink"
               >
-                {recipe.title}
+                {fullRecipe.title}
               </Box>
 
               {/* Description */}
@@ -236,7 +363,7 @@ function RecipeDetail() {
                 textStyle="bodyParagraph"
                 color="neutral.ink"
               >
-                {recipe.description}
+                {fullRecipe.description}
               </Box>
 
               {/* Prep Time */}
@@ -250,7 +377,7 @@ function RecipeDetail() {
                   textStyle="footnoteMedium"
                   color="grey.700"
                 >
-                  {recipe.prepTime}
+                  {fullRecipe.prepTime}
                 </Box>
               </HStack>
 
@@ -260,11 +387,18 @@ function RecipeDetail() {
                 gap="2"
                 align="center"
               >
-                {recipe.ingredients.map((ingredient, index) => (
+                {fullRecipe.matchedIngredients?.map((ingredient, index) => (
                   <Label
                     key={index}
                     text={ingredient}
                     state="Available"
+                  />
+                ))}
+                {fullRecipe.additionalIngredients?.map((ingredient, index) => (
+                  <Label
+                    key={`add-${index}`}
+                    text={ingredient}
+                    state="Missing"
                   />
                 ))}
               </Flex>
@@ -282,11 +416,11 @@ function RecipeDetail() {
                 textStyle="title2"
                 color="neutral.ink"
               >
-                🧑‍🍳 How to make ({recipe.servings} servings)
+                🧑‍🍳 How to make ({fullRecipe.servings} servings)
               </Box>
 
               <VStack
-                spacing="2"
+                spacing="8"
                 align="stretch"
               >
                 {/* Collapsible Content */}
@@ -295,96 +429,99 @@ function RecipeDetail() {
                   maxH={isExpanded ? 'none' : '280px'}
                   position="relative"
                 >
-                  <VStack
-                    spacing="6"
-                    align="stretch"
-                  >
-                    {/* Ingredients */}
-                    <VStack
-                      spacing="2"
-                      align="stretch"
-                    >
-                      <Box
-                        textStyle="headlineSemibold"
-                        color="neutral.ink"
-                      >
-                        🥣 Ingredients
-                      </Box>
-                      <Box
-                        as="ul"
-                        pl="6"
-                        textStyle="bodyParagraph"
-                        color="neutral.ink"
-                        listStyleType="disc"
-                        listStylePosition="outside"
-                      >
-                        {recipe.instructions.ingredients.map((item, index) => (
-                          <Box as="li" key={index}>
-                            {item}
-                          </Box>
-                        ))}
-                      </Box>
-                    </VStack>
+                  <Box>
+                    {/* Ingredients from User */}
+                    {fullRecipe.instructions?.ingredientsFromUser && fullRecipe.instructions.ingredientsFromUser.length > 0 && (
+                      <VStack spacing="2" align="stretch" mb="8">
+                        <Box textStyle="headlineSemibold" color="neutral.ink">
+                          🥣 Ingredients (You Have)
+                        </Box>
+                        <Box
+                          as="ul"
+                          pl="6"
+                          textStyle="bodyParagraph"
+                          color="neutral.ink"
+                          listStyleType="disc"
+                          listStylePosition="outside"
+                        >
+                          {fullRecipe.instructions.ingredientsFromUser.map((item, index) => (
+                            <Box as="li" key={index}>
+                              {item}
+                            </Box>
+                          ))}
+                        </Box>
+                      </VStack>
+                    )}
 
-                    {/* Seasoning */}
-                    <VStack
-                      spacing="2"
-                      align="stretch"
-                    >
-                      <Box
-                        textStyle="headlineSemibold"
-                        color="neutral.ink"
-                      >
-                        🧂 Seasoning
-                      </Box>
-                      <Box
-                        as="ul"
-                        pl="6"
-                        textStyle="bodyParagraph"
-                        color="neutral.ink"
-                        listStyleType="disc"
-                        listStylePosition="outside"
-                      >
-                        {recipe.instructions.seasoning.map((item, index) => (
-                          <Box as="li" key={index}>
-                            {item}
-                          </Box>
-                        ))}
-                      </Box>
-                    </VStack>
+                    {/* Additional Ingredients Needed */}
+                    {fullRecipe.instructions?.ingredientsNotFromUser && fullRecipe.instructions.ingredientsNotFromUser.length > 0 && (
+                      <VStack spacing="2" align="stretch" mb="10">
+                        <Box textStyle="headlineSemibold" color="neutral.ink">
+                          🛒 Additional Ingredients Needed
+                        </Box>
+                        <Box
+                          as="ul"
+                          pl="6"
+                          textStyle="bodyParagraph"
+                          color="neutral.ink"
+                          listStyleType="disc"
+                          listStylePosition="outside"
+                        >
+                          {fullRecipe.instructions.ingredientsNotFromUser.map((item, index) => (
+                            <Box as="li" key={index}>
+                              {item}
+                            </Box>
+                          ))}
+                        </Box>
+                      </VStack>
+                    )}
+
+                    {/* Condiments and Seasonings */}
+                    {fullRecipe.instructions?.condimentsAndSeasonings && fullRecipe.instructions.condimentsAndSeasonings.length > 0 && (
+                      <VStack spacing="2" align="stretch" mb="10">
+                        <Box textStyle="headlineSemibold" color="neutral.ink">
+                          🧂 Condiments & Seasonings
+                        </Box>
+                        <Box
+                          as="ul"
+                          pl="6"
+                          textStyle="bodyParagraph"
+                          color="neutral.ink"
+                          listStyleType="disc"
+                          listStylePosition="outside"
+                        >
+                          {fullRecipe.instructions.condimentsAndSeasonings.map((item, index) => (
+                            <Box as="li" key={index}>
+                              {item}
+                            </Box>
+                          ))}
+                        </Box>
+                      </VStack>
+                    )}
 
                     {/* Steps */}
-                    <VStack
-                      spacing="2"
-                      align="stretch"
-                    >
-                      <Box
-                        textStyle="headlineSemibold"
-                        color="neutral.ink"
-                      >
-                        🔪 Steps
-                      </Box>
-                      <Box
-                        as="ul"
-                        pl="6"
-                        textStyle="bodyParagraph"
-                        color="neutral.ink"
-                        listStyleType="decimal"
-                        listStylePosition="outside"
-                      >
-                        {recipe.instructions.steps.map((step, index) => (
-                          <Box as="li" key={index} mb="4">
-                            {step.split('\n').map((line, i) => (
-                              <Box key={i}>
-                                {line}
-                                {i === 0 && <br />}
-                              </Box>
-                            ))}
-                          </Box>
-                        ))}
-                      </Box>
-                    </VStack>
-                  </VStack>
+                    {fullRecipe.steps && fullRecipe.steps.length > 0 && (
+                      <VStack spacing="2" align="stretch">
+                        <Box textStyle="headlineSemibold" color="neutral.ink">
+                          🔪 Steps
+                        </Box>
+                        <Box
+                          as="ul"
+                          pl="6"
+                          textStyle="bodyParagraph"
+                          color="neutral.ink"
+                          listStyleType="decimal"
+                          listStylePosition="outside"
+                        >
+                          {fullRecipe.steps.map((step, index) => (
+                            <Box as="li" key={index} mb="1">
+                              {step}
+                            </Box>
+                          ))}
+                        </Box>
+                      </VStack>
+                    )}
+                  </Box>
                 </Box>
 
                 {/* View All Button */}
@@ -393,9 +530,6 @@ function RecipeDetail() {
                     variant="tertiary"
                     icon={false}
                     onClick={toggleInstructions}
-                    px="0"
-                    py="1"
-                    h="auto"
                   >
                     {isExpanded ? 'Show less' : 'View all'}
                   </Button>
@@ -425,27 +559,19 @@ function RecipeDetail() {
                 <HStack spacing="4">
                   <Button
                     variant="tertiary"
-                    icon={false}
+                    icon={true}
+                    iconElement={<ArrowLeft size={20} weight="regular" />}
                     onClick={handlePrevVideo}
-                    isDisabled={currentVideoIndex === 0}
-                    opacity={currentVideoIndex === 0 ? 0.3 : 1}
-                    px="4"
-                    py="3.5"
-                    h="12"
+                    disabled={currentVideoIndex === 0}
                   >
-                    <Box as={ArrowLeft} size={20} />
                   </Button>
                   <Button
                     variant="tertiary"
-                    icon={false}
+                    icon={true}
+                    iconElement={<ArrowRight size={20} weight="regular" />}
                     onClick={handleNextVideo}
-                    isDisabled={currentVideoIndex >= recipe.videos.length - 1}
-                    opacity={currentVideoIndex >= recipe.videos.length - 1 ? 0.3 : 1}
-                    px="4"
-                    py="3.5"
-                    h="12"
+                    disabled={currentVideoIndex >= fullRecipe.videos.length - 1}
                   >
-                    <Box as={ArrowRight} size={20} />
                   </Button>
                 </HStack>
               </Flex>
@@ -463,12 +589,12 @@ function RecipeDetail() {
                   transition="transform 0.3s ease"
                   transform={`translateX(-${currentVideoIndex * (240 + 24)}px)`}
                 >
-                  {recipe.videos.map((video) => (
+                  {fullRecipe.videos.map((video) => (
                     <ShortVideo
                       key={video.id}
                       thumbnail={video.thumbnail}
                       link={video.link}
-                      alt={`${recipe.title} video ${video.id}`}
+                      alt={`${fullRecipe.title} video ${video.id}`}
                     />
                   ))}
                 </Flex>
@@ -479,7 +605,7 @@ function RecipeDetail() {
                 justify="center"
                 gap="2"
               >
-                {recipe.videos.map((video, index) => (
+                {fullRecipe.videos.map((video, index) => (
                   <Box
                     key={video.id}
                     w="2"

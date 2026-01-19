@@ -1,4 +1,4 @@
-import { Button as ChakraButton, Box } from '@chakra-ui/react'
+import { Button as ChakraButton } from '@chakra-ui/react'
 import { ArrowLeft } from 'phosphor-react'
 
 function Button({
@@ -10,28 +10,27 @@ function Button({
   ...props
 }) {
   // Icon to display - use provided iconElement or default ArrowLeft from Phosphor Icons
-  // Icon color will inherit from button's color (currentColor)
   const iconComponent = icon
     ? iconElement || <ArrowLeft size={20} weight="regular" />
     : null
+
+  // Tertiary buttons need custom styling
+  const customStyles = variant === 'tertiary' ? {
+    gap: icon ? "8px" : "0",
+    textStyle: "headlineSemibold",
+  } : {
+    gap: icon ? "8px" : "0",
+    textStyle: "headlineSemibold",
+  }
 
   return (
     <ChakraButton
       variant={variant}
       disabled={disabled}
+      {...customStyles}
       {...props}
     >
-      {iconComponent && (
-        <Box
-          as="span"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          flexShrink={0}
-        >
-          {iconComponent}
-        </Box>
-      )}
+      {iconComponent}
       {children}
     </ChakraButton>
   )

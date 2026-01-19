@@ -186,53 +186,61 @@ const config = defineConfig({
           fontFamily: `'Work Sans', sans-serif`,
           fontWeight: '600',
           borderRadius: 'sm',
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: '2',
+          justifyContent: 'center',
           transition: 'all 0.2s ease',
+          cursor: 'pointer',
+          border: 'none',
+          outline: 'none',
+          _focusVisible: {
+            boxShadow: '0 0 0 3px rgba(255, 184, 107, 0.5)',
+          },
         },
         variants: {
-          primary: {
-            bg: 'primary.200',
-            color: 'neutral.ink',
-            _hover: {
-              bg: 'primary.300',
-            },
-            _active: {
-              bg: 'primary.400',
-            },
-            _disabled: {
-              opacity: '0.3',
-              cursor: 'not-allowed',
+          variant: {
+            primary: {
+              bg: 'primary.200',
+              color: 'neutral.ink',
               _hover: {
-                bg: 'primary.200',
+                bg: 'primary.300',
+              },
+              _active: {
+                bg: 'primary.400',
+              },
+              _disabled: {
+                opacity: 0.3,
+                cursor: 'not-allowed',
+                pointerEvents: 'none',
               },
             },
-          },
-          tertiary: {
-            bg: 'transparent',
-            color: 'primary.500',
-            _hover: {
-              color: 'primary.300',
-            },
-            _active: {
-              color: 'primary.400',
-            },
-            _disabled: {
-              opacity: '0.3',
-              cursor: 'not-allowed',
+            tertiary: {
+              bg: 'transparent',
+              color: 'primary.500',
+              padding: '0',
+              minW: 'auto',
+              height: 'auto',
               _hover: {
-                color: 'primary.500',
+                color: 'primary.300',
+              },
+              _active: {
+                color: 'primary.400',
+              },
+              _disabled: {
+                opacity: 0.3,
+                cursor: 'not-allowed',
+                pointerEvents: 'none',
               },
             },
           },
         },
         sizes: {
           md: {
-            h: '12',
+            height: '48px',
             fontSize: '16px',
-            px: '4',
-            py: '3.5',
+            px: '16px',
+            py: '14px',
+            minW: '48px',
           },
         },
         defaultVariants: {
@@ -346,19 +354,17 @@ const config = defineConfig({
             gap: '2',
             px: '2',
             py: '1.5',
-            borderRadius: 'xs',
+            borderRadius: '0px',
             textStyle: 'tinyLabelMedium',
           },
         },
         variants: {
-          available: {
-            root: {
+          variant: {
+            available: {
               bg: 'primary.50',
               color: 'primary.500',
             },
-          },
-          notAvailable: {
-            root: {
+            notAvailable: {
               bg: 'grey.50',
               color: 'grey.500',
             },
