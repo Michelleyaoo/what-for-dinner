@@ -335,6 +335,7 @@ function RecipeDetail() {
           >
             {/* Hero Image */}
             <Image 
+              src={fullRecipe.imageUrl}
               image={fullRecipe.image || '1'}
               alt={fullRecipe.title}
               h="320px"

@@ -9,7 +9,8 @@ function RecipeCard({
   title = "Tomato and egg stir fry",
   prepTime = "20 mins",
   ingredients = [],
-  image = "1"
+  image = "1",
+  imageUrl
 }) {
   const navigate = useNavigate()
 
@@ -46,7 +47,7 @@ function RecipeCard({
       onClick={handleClick}
     >
       {/* Recipe Image */}
-      <Image image={image} alt={title} />
+      <Image src={imageUrl} image={image} alt={title} />
 
       {/* Content */}
       <VStack

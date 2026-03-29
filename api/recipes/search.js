@@ -75,6 +75,24 @@ export default async function handler(req, res) {
 
     console.log(`Generated ${recipeData.totalResults} recipes successfully`);
 
+    // Fetch a real food photo from Unsplash for each recipe in parallel
+    if (recipeData.recipes && process.env.UNSPLASH_ACCESS_KEY) {
+      recipeData.recipes = await Promise.all(
+        recipeData.recipes.map(async (recipe) => {
+          try {
+            const keywords = (recipe.imageSearchKeywords || []).join(' ')
+            const response = await fetch(
+              `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keywords)}&per_page=1&orientation=landscape&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
+            )
+            const data = await response.json()
+            return { ...recipe, imageUrl: data.results?.[0]?.urls?.regular || null }
+          } catch {
+            return { ...recipe, imageUrl: null }
+          }
+        })
+      )
+    }
+
     // Return the recipes
     return res.status(200).json(recipeData);
 

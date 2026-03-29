@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { Box, Flex, VStack, Container, Heading, Text } from '@chakra-ui/react'
 import Button from '../components/Button'
@@ -20,6 +20,7 @@ function ResultList() {
   const [searchContext, setSearchContext] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const isFetchingRef = useRef(false)
 
   useEffect(() => {
     // Get ingredients from URL params
@@ -47,6 +48,10 @@ function ResultList() {
   }, [location.state, searchParams, navigate])
 
   const fetchRecipes = async (ingredients, params = {}) => {
+    // Prevent double-fetch from React StrictMode double-invoking effects
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
+
     // Check cache first
     const cacheKey = getSearchCacheKey(ingredients)
     const cachedData = getFromCache(cacheKey)
@@ -56,6 +61,7 @@ function ResultList() {
       setRecipes(cachedData.recipes)
       setTotalResults(cachedData.totalResults)
       setSearchContext(cachedData.searchContext)
+      isFetchingRef.current = false
       return // Skip API call!
     }
 
@@ -90,6 +96,7 @@ function ResultList() {
       setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
+      isFetchingRef.current = false
     }
   }
 
@@ -284,6 +291,7 @@ function ResultList() {
                         prepTime={recipe.prepTime}
                         ingredients={ingredientsWithStates}
                         image={recipe.image || '1'}
+                        imageUrl={recipe.imageUrl}
                       />
                     </Box>
                   )
