@@ -1,17 +1,12 @@
-import { Box } from '@chakra-ui/react'
+import { Box, Flex } from '@chakra-ui/react'
+import { Play } from 'phosphor-react'
 
 function ShortVideo({ 
   thumbnail,
-  link = '#',
+  onPlay,
   alt = 'Recipe video',
   ...props 
 }) {
-  const handleClick = () => {
-    if (link && link !== '#') {
-      window.open(link, '_blank', 'noopener,noreferrer')
-    }
-  }
-
   return (
     <Box
       w="240px"
@@ -26,7 +21,7 @@ function ShortVideo({
         transform: 'translateY(-4px)',
         boxShadow: 'card',
       }}
-      onClick={handleClick}
+      onClick={onPlay}
       {...props}
     >
       {thumbnail ? (
@@ -47,18 +42,27 @@ function ShortVideo({
           position="absolute"
           inset="0"
           bg="grey.100"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Box
-            textStyle="subheadRegular"
-            color="grey.500"
-          >
-            Video placeholder
-          </Box>
-        </Box>
+        />
       )}
+
+      {/* Scrim */}
+      <Box
+        position="absolute"
+        inset="0"
+        bg="rgba(0, 0, 0, 0.5)"
+        pointerEvents="none"
+      />
+
+      {/* Play icon */}
+      <Flex
+        position="absolute"
+        inset="0"
+        align="center"
+        justify="center"
+        pointerEvents="none"
+      >
+        <Box as={Play} size={40} color="#ffffff" weight="fill" />
+      </Flex>
     </Box>
   )
 }

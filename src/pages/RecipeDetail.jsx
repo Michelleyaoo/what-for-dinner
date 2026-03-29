@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Box, Flex, VStack, HStack, Container, Text } from '@chakra-ui/react'
+import { Box, Flex, VStack, HStack, Container, Text, DialogRoot, DialogBackdrop, DialogPositioner, DialogContent, DialogCloseTrigger } from '@chakra-ui/react'
 import { Clock, ArrowLeft, ArrowRight } from 'phosphor-react'
 import Button from '../components/Button'
 import Label from '../components/Label'
 import Image from '../components/Image'
 import ShortVideo from '../components/ShortVideo'
 import RecipeDetailSkeleton from '../components/RecipeDetailSkeleton'
-import { getRecipeDetails, getErrorMessage } from '../utils/api'
+import { getRecipeDetails, getRecipeVideos, getErrorMessage } from '../utils/api'
 import { ingredientsToUrlParam } from '../utils/ingredients'
 import { getDetailsCacheKey, saveToCache, getFromCache } from '../utils/recipeCache'
 
@@ -150,6 +150,8 @@ function RecipeDetail() {
   const [error, setError] = useState(null)
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
+  const [videos, setVideos] = useState(mockVideos)
+  const [selectedVideo, setSelectedVideo] = useState(null)
 
   useEffect(() => {
     // Get recipe from navigation state
@@ -166,6 +168,25 @@ function RecipeDetail() {
     fetchRecipeDetails(recipeFromState, searchContext)
   }, [id, location.state, navigate])
 
+  const fetchVideos = async (recipeId, recipeTitle, videoSearchTerms = []) => {
+    const videosCacheKey = `videos-${recipeId}`
+    const cachedVideos = getFromCache(videosCacheKey)
+
+    if (cachedVideos) {
+      console.log('✨ Using cached recipe videos')
+      setVideos(cachedVideos)
+      return
+    }
+
+    const result = await getRecipeVideos({ videoSearchTerms, recipeTitle })
+    if (result && result.length > 0) {
+      setVideos(result)
+      saveToCache(videosCacheKey, result)
+      console.log('💾 Saved recipe videos to cache')
+    }
+    // If result is empty, videos state keeps the mockVideos fallback
+  }
+
   const fetchRecipeDetails = async (recipeData, searchContext) => {
     // Check cache first
     const cacheKey = getDetailsCacheKey(recipeData.id)
@@ -175,6 +196,8 @@ function RecipeDetail() {
       console.log('✨ Using cached recipe details')
       setRecipeDetails(cachedDetails)
       setIsLoading(false)
+      // Fetch videos non-blocking (uses its own cache)
+      fetchVideos(recipeData.id, recipeData.title, cachedDetails.videoSearchTerms)
       return // Skip API call!
     }
 
@@ -200,6 +223,9 @@ function RecipeDetail() {
       // Save to cache
       saveToCache(cacheKey, details)
       console.log('💾 Saved recipe details to cache')
+
+      // Fetch videos non-blocking after details resolve
+      fetchVideos(recipeData.id, recipeData.title, details.videoSearchTerms)
     } catch (err) {
       console.error('Error fetching recipe details:', err)
       setError(getErrorMessage(err))
@@ -228,7 +254,7 @@ function RecipeDetail() {
 
   const handleNextVideo = () => {
     setCurrentVideoIndex((prev) => 
-      Math.min(mockVideos.length - 1, prev + 1)
+      Math.min(videos.length - 1, prev + 1)
     )
   }
 
@@ -276,7 +302,7 @@ function RecipeDetail() {
   const fullRecipe = {
     ...recipe,
     ...recipeDetails,
-    videos: mockVideos, // TODO: Use videoSearchTerms to fetch real videos
+    videos,
     servings: recipeDetails?.servings || 2
   }
 
@@ -571,7 +597,7 @@ function RecipeDetail() {
                     icon={true}
                     iconElement={<ArrowRight size={20} weight="regular" />}
                     onClick={handleNextVideo}
-                    disabled={currentVideoIndex >= fullRecipe.videos.length - 1}
+                    disabled={currentVideoIndex >= videos.length - 1}
                   >
                   </Button>
                 </HStack>
@@ -590,12 +616,12 @@ function RecipeDetail() {
                   transition="transform 0.3s ease"
                   transform={`translateX(-${currentVideoIndex * (240 + 24)}px)`}
                 >
-                  {fullRecipe.videos.map((video) => (
+                  {videos.map((video) => (
                     <ShortVideo
                       key={video.id}
                       thumbnail={video.thumbnail}
-                      link={video.link}
                       alt={`${fullRecipe.title} video ${video.id}`}
+                      onPlay={() => setSelectedVideo(video)}
                     />
                   ))}
                 </Flex>
@@ -606,7 +632,7 @@ function RecipeDetail() {
                 justify="center"
                 gap="2"
               >
-                {fullRecipe.videos.map((video, index) => (
+                {videos.map((video, index) => (
                   <Box
                     key={video.id}
                     w="2"
@@ -620,6 +646,43 @@ function RecipeDetail() {
                 ))}
               </Flex>
             </VStack>
+
+            {/* YouTube Video Modal */}
+            <DialogRoot
+              open={!!selectedVideo}
+              onOpenChange={({ open }) => { if (!open) setSelectedVideo(null) }}
+            >
+              <DialogBackdrop />
+              <DialogPositioner>
+                <DialogContent
+                  w="360px"
+                  h="640px"
+                  borderRadius="16px"
+                  overflow="hidden"
+                  position="relative"
+                  bg="black"
+                >
+                  <DialogCloseTrigger
+                    position="absolute"
+                    top="3"
+                    right="3"
+                    zIndex="1"
+                    color="white"
+                  />
+                  {selectedVideo && (
+                    <Box
+                      as="iframe"
+                      src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1`}
+                      w="100%"
+                      h="100%"
+                      border="none"
+                      allow="autoplay; encrypted-media; fullscreen"
+                      allowFullScreen
+                    />
+                  )}
+                </DialogContent>
+              </DialogPositioner>
+            </DialogRoot>
           </VStack>
         </Box>
       </Container>

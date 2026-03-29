@@ -84,6 +84,35 @@ export async function getRecipeDetails(recipeContext) {
 }
 
 /**
+ * Fetch YouTube Shorts videos for a recipe
+ * @param {Object} params
+ * @param {string[]} params.videoSearchTerms - Search terms from recipe details
+ * @param {string} params.recipeTitle - Recipe title used as primary search query
+ * @returns {Promise<Array<{id: string, thumbnail: string|null, link: string}>>}
+ */
+export async function getRecipeVideos({ videoSearchTerms = [], recipeTitle = '' }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/recipes/videos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ videoSearchTerms, recipeTitle })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `API error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching recipe videos:', error);
+    return []; // Non-fatal — carousel will show fallback
+  }
+}
+
+/**
  * Handle API errors with user-friendly messages
  * @param {Error} error - The error object
  * @returns {string} User-friendly error message
