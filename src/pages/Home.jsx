@@ -1,9 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Heading, Flex, VStack, Text } from '@chakra-ui/react'
+import { keyframes } from '@emotion/react'
 import Chip from '../components/Chip'
 import Button from '../components/Button'
 import { removeEmojiFromIngredient, ingredientsToUrlParam } from '../utils/ingredients'
+import foodPng from '../assets/images/food.png'
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`
+
+const blink = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+`
+
+const PHRASES = [
+  'What for dinner?',
+  'Pizza for one',
+  'Winner winner chicken dinner',
+  'Pasta for two',
+]
+
+const TYPING_SPEED = 70
+const ERASING_SPEED = 40
+const PAUSE_AFTER_TYPE = 300
+const PAUSE_BEFORE_NEXT = 300
+
+const FOOD_IMAGE_SIZE = '80px'
+const FOOD_SPIN_DURATION = '8s'
+const CURSOR_BLINK_SPEED = '0.8s'
 
 const INGREDIENTS = [
   '🥬 Cabbage',
@@ -22,6 +50,43 @@ function Home() {
   const navigate = useNavigate()
   const [selectedIngredients, setSelectedIngredients] = useState([])
   const [error, setError] = useState(null)
+
+  const [phraseIdx, setPhraseIdx] = useState(0)
+  const [displayed, setDisplayed] = useState('')
+  const [isErasing, setIsErasing] = useState(false)
+
+  useEffect(() => {
+    const current = PHRASES[phraseIdx]
+
+    if (!isErasing && displayed.length < current.length) {
+      const t = setTimeout(
+        () => setDisplayed(current.slice(0, displayed.length + 1)),
+        TYPING_SPEED
+      )
+      return () => clearTimeout(t)
+    }
+
+    if (!isErasing && displayed.length === current.length) {
+      const t = setTimeout(() => setIsErasing(true), PAUSE_AFTER_TYPE)
+      return () => clearTimeout(t)
+    }
+
+    if (isErasing && displayed.length > 0) {
+      const t = setTimeout(
+        () => setDisplayed(current.slice(0, displayed.length - 1)),
+        ERASING_SPEED
+      )
+      return () => clearTimeout(t)
+    }
+
+    if (isErasing && displayed.length === 0) {
+      const t = setTimeout(() => {
+        setPhraseIdx((i) => (i + 1) % PHRASES.length)
+        setIsErasing(false)
+      }, PAUSE_BEFORE_NEXT)
+      return () => clearTimeout(t)
+    }
+  }, [displayed, isErasing, phraseIdx])
 
   const toggleIngredient = (ingredient) => {
     setSelectedIngredients((prev) =>
@@ -72,22 +137,41 @@ function Home() {
         maxW="40.5rem" 
         w="100%"
       >
-        <Heading 
-          as="h1" 
-          textStyle="heading"
-          textAlign="center"
-          color="neutral.ink"
-          sx={{
-            '@media (max-width: 47.9375rem)': { // md breakpoint - 1
-              textStyle: 'title2',
-            },
-            '@media (max-width: 29.9375rem)': { // sm breakpoint - 1
-              textStyle: 'title1',
-            },
-          }}
-        >
-          🥘 What for dinner?
-        </Heading>
+        <VStack gap="4" align="center">
+          <Box
+            as="img"
+            src={foodPng}
+            alt=""
+            w={FOOD_IMAGE_SIZE}
+            h={FOOD_IMAGE_SIZE}
+            animation={`${spin} ${FOOD_SPIN_DURATION} linear infinite`}
+          />
+          <Heading
+            as="h1"
+            textStyle="heading"
+            textAlign="center"
+            color="neutral.ink"
+            minH="3.5rem"
+            sx={{
+              '@media (max-width: 47.9375rem)': {
+                textStyle: 'title2',
+                minHeight: '2.75rem',
+              },
+              '@media (max-width: 29.9375rem)': {
+                textStyle: 'title1',
+                minHeight: '2.25rem',
+              },
+            }}
+          >
+            {displayed}
+            <Box
+              as="span"
+              animation={`${blink} ${CURSOR_BLINK_SPEED} step-start infinite`}
+            >
+              |
+            </Box>
+          </Heading>
+        </VStack>
 
         <VStack gap="4" w="100%" align="stretch">
           {/* Selected Ingredients Container - Replaces Input */}
