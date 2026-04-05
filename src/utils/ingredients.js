@@ -2,37 +2,9 @@
  * Utility functions for handling ingredient data
  */
 
-// Emoji mapping for common ingredients
-const INGREDIENT_EMOJIS = {
-  'cabbage': '🥬',
-  'tomato': '🍅',
-  'potato': '🥔',
-  'carrot': '🥕',
-  'onion': '🧅',
-  'broccoli': '🥦',
-  'egg': '🥚',
-  'eggs': '🥚',
-  'beef': '🥩',
-  'chicken': '🍗',
-  'tofu': '🫘',
-  'garlic': '🧄',
-  'pepper': '🌶️',
-  'mushroom': '🍄',
-  'corn': '🌽',
-  'eggplant': '🍆',
-  'lettuce': '🥬',
-  'cucumber': '🥒',
-  'avocado': '🥑',
-  'spinach': '🥬',
-  'pork': '🥓',
-  'fish': '🐟',
-  'shrimp': '🦐',
-  'cheese': '🧀',
-  'pasta': '🍝',
-  'rice': '🍚',
-  'bread': '🍞',
-  'noodles': '🍜'
-};
+import { INGREDIENT_EMOJI_MAP } from '../data/ingredients'
+
+const INGREDIENT_EMOJIS = INGREDIENT_EMOJI_MAP
 
 /**
  * Add emoji to ingredient name if not already present

@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { Box, Flex, VStack, Container, Heading, Text } from '@chakra-ui/react'
 import Button from '../components/Button'
-import Chip from '../components/Chip'
+import IngredientSearch from '../components/IngredientSearch'
 import RecipeCard from '../components/RecipeCard'
 import RecipeCardSkeleton from '../components/RecipeCardSkeleton'
 import { searchRecipes, getErrorMessage } from '../utils/api'
-import { ingredientsFromUrlParam, formatIngredientsForDisplay } from '../utils/ingredients'
+import { ingredientsFromUrlParam, ingredientsToUrlParam, removeEmojiFromIngredient, formatIngredientsForDisplay } from '../utils/ingredients'
 import { getSearchCacheKey, saveToCache, getFromCache } from '../utils/recipeCache'
 
 function ResultList() {
@@ -17,55 +17,53 @@ function ResultList() {
   const [recipes, setRecipes] = useState([])
   const [totalResults, setTotalResults] = useState(0)
   const [selectedIngredients, setSelectedIngredients] = useState([])
+  const [searchedIngredients, setSearchedIngredients] = useState([])
   const [searchContext, setSearchContext] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const isFetchingRef = useRef(false)
 
+  const ingredientsChanged =
+    selectedIngredients.length !== searchedIngredients.length ||
+    selectedIngredients.some((ing) => !searchedIngredients.includes(ing))
+
   useEffect(() => {
-    // Get ingredients from URL params
     const ingredientsParam = searchParams.get('ingredients')
     const ingredients = ingredientsFromUrlParam(ingredientsParam)
     
     if (ingredients.length === 0) {
-      // No ingredients in URL, redirect to home
       navigate('/')
       return
     }
+
+    const displayed = formatIngredientsForDisplay(ingredients)
+    setSelectedIngredients(displayed)
+    setSearchedIngredients(displayed)
     
-    setSelectedIngredients(formatIngredientsForDisplay(ingredients))
-    
-    // Check if we have search params from navigation state
     const searchParamsFromState = location.state?.searchParams
     
     if (searchParamsFromState) {
-      // Fetch recipes using the search params
       fetchRecipes(searchParamsFromState.ingredients, searchParamsFromState)
     } else {
-      // No search params, use ingredients from URL
       fetchRecipes(ingredients)
     }
   }, [location.state, searchParams, navigate])
 
   const fetchRecipes = async (ingredients, params = {}) => {
-    // Prevent double-fetch from React StrictMode double-invoking effects
     if (isFetchingRef.current) return
     isFetchingRef.current = true
 
-    // Check cache first
     const cacheKey = getSearchCacheKey(ingredients)
     const cachedData = getFromCache(cacheKey)
     
     if (cachedData) {
-      console.log('✨ Using cached recipe search results')
       setRecipes(cachedData.recipes)
       setTotalResults(cachedData.totalResults)
       setSearchContext(cachedData.searchContext)
       isFetchingRef.current = false
-      return // Skip API call!
+      return
     }
 
-    // If not in cache, fetch from API
     setIsLoading(true)
     setError(null)
 
@@ -83,14 +81,11 @@ function ResultList() {
       setTotalResults(data.totalResults)
       setSearchContext(searchParams)
 
-      // Save to cache
       saveToCache(cacheKey, {
         recipes: data.recipes,
         totalResults: data.totalResults,
         searchContext: searchParams
       })
-      
-      console.log('💾 Saved recipe search results to cache')
     } catch (err) {
       console.error('Error fetching recipes:', err)
       setError(getErrorMessage(err))
@@ -98,6 +93,35 @@ function ResultList() {
       setIsLoading(false)
       isFetchingRef.current = false
     }
+  }
+
+  const toggleIngredient = (ingredient) => {
+    setSelectedIngredients((prev) =>
+      prev.includes(ingredient)
+        ? prev.filter((item) => item !== ingredient)
+        : [...prev, ingredient]
+    )
+  }
+
+  const handleUpdateSearch = () => {
+    if (selectedIngredients.length === 0) return
+
+    const cleanIngredients = selectedIngredients.map(removeEmojiFromIngredient)
+    const ingredientsParam = ingredientsToUrlParam(cleanIngredients)
+
+    setSearchedIngredients([...selectedIngredients])
+
+    navigate(`/results?ingredients=${ingredientsParam}`, {
+      replace: true,
+      state: {
+        searchParams: {
+          ingredients: cleanIngredients,
+          maxPrepTime: 30,
+          servings: 2,
+          dietaryPreferences: ['none']
+        }
+      }
+    })
   }
 
   const handleBack = () => {
@@ -143,42 +167,42 @@ function ResultList() {
             Back
           </Button>
 
-          {/* Selected Ingredients Chips */}
+          {/* Ingredient Search */}
           <Box
             flex={{ base: '0', md: '1' }}
             maxW={{ base: '100%', md: '45rem' }}
           >
-            <Box
-              bg="white"
-              border="1px solid"
-              borderColor="neutral.border"
-              borderRadius="lg"
-              px="4"
-              py="3"
-              display="flex"
-              alignItems="center"
-              gap="2"
-              flexWrap="wrap"
-              minH="16"
-            >
-              {selectedIngredients.map((ingredient) => (
-                <Chip
-                  key={ingredient}
-                  text={ingredient}
-                  size="Small"
-                  isSelected={true}
-                  onClick={() => handleRemoveIngredient(ingredient)}
-                />
-              ))}
-            </Box>
+            <IngredientSearch
+              selectedIngredients={selectedIngredients}
+              onToggleIngredient={toggleIngredient}
+            />
           </Box>
 
-          {/* Empty space placeholder (for alignment on desktop only) */}
+          {/* Update results button — visible when ingredients have changed */}
           <Box
-            w="30"
-            visibility="hidden"
-            display={{ base: 'none', md: 'block' }}
-          />
+            w={{ base: 'auto', md: '30' }}
+            display="flex"
+            alignItems="center"
+            justifyContent={{ base: 'stretch', md: 'flex-start' }}
+          >
+            {ingredientsChanged && selectedIngredients.length > 0 ? (
+              <Button
+                variant="primary"
+                icon={false}
+                onClick={handleUpdateSearch}
+                w={{ base: '100%', md: 'auto' }}
+                whiteSpace="nowrap"
+              >
+                Update results
+              </Button>
+            ) : (
+              <Box
+                w="30"
+                visibility="hidden"
+                display={{ base: 'none', md: 'block' }}
+              />
+            )}
+          </Box>
         </Flex>
       </Container>
 

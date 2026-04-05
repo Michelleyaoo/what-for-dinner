@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { Box, Heading, Flex, VStack, Text } from '@chakra-ui/react'
 import { keyframes } from '@emotion/react'
 import Chip from '../components/Chip'
+import IngredientSearch from '../components/IngredientSearch'
 import Button from '../components/Button'
 import { removeEmojiFromIngredient, ingredientsToUrlParam } from '../utils/ingredients'
+import { POPULAR_INGREDIENTS } from '../data/ingredients'
 import foodPng from '../assets/images/food.png'
 
 const spin = keyframes`
@@ -32,19 +34,6 @@ const PAUSE_BEFORE_NEXT = 300
 const FOOD_IMAGE_SIZE = '80px'
 const FOOD_SPIN_DURATION = '8s'
 const CURSOR_BLINK_SPEED = '0.8s'
-
-const INGREDIENTS = [
-  '🥬 Cabbage',
-  '🍅 Tomato',
-  '🥔 Potato',
-  '🥕 Carrot',
-  '🧅 Onion',
-  '🥦 Broccoli',
-  '🥚 Egg',
-  '🥩 Beef',
-  '🍗 Chicken',
-  '🫘 Tofu',
-]
 
 function Home() {
   const navigate = useNavigate()
@@ -174,46 +163,12 @@ function Home() {
         </VStack>
 
         <VStack gap="4" w="100%" align="stretch">
-          {/* Selected Ingredients Container - Replaces Input */}
-          <Box
-            bg="white"
-            border="1px solid"
-            borderColor="neutral.border"
-            borderRadius="sm"
-            px="4"
-            py="3"
-            height={selectedIngredients.length === 0 ? "68px" : "auto"}
-            minH="68px"
-            display="flex"
-            alignItems="center"
-            flexWrap="wrap"
-            gap="3"
-            transition="all 0.2s ease"
-            _hover={{
-              borderColor: "primary.200"
-            }}
-          >
-            {selectedIngredients.length === 0 ? (
-              <Text
-                textStyle="bodyRegular"
-                color="grey.400"
-              >
-                what I have in the fridge...
-              </Text>
-            ) : (
-              selectedIngredients.map((ingredient) => (
-                <Chip
-                  key={ingredient}
-                  text={ingredient}
-                  isSelected={true}
-                  onClick={() => toggleIngredient(ingredient)}
-                  size="Small"
-                />
-              ))
-            )}
-          </Box>
+          <IngredientSearch
+            selectedIngredients={selectedIngredients}
+            onToggleIngredient={toggleIngredient}
+          />
 
-          {/* Available Ingredients List */}
+          {/* Quick-pick popular ingredients */}
           <Flex 
             wrap="wrap" 
             gap="3"
@@ -221,7 +176,7 @@ function Home() {
             align="center"
             minH={{ base: 'auto', md: '26' }}
           >
-            {INGREDIENTS.filter((ingredient) => !selectedIngredients.includes(ingredient)).map((ingredient) => (
+            {POPULAR_INGREDIENTS.filter((ingredient) => !selectedIngredients.includes(ingredient)).map((ingredient) => (
               <Chip
                 key={ingredient}
                 text={ingredient}
