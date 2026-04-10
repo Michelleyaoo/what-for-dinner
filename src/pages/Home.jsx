@@ -116,100 +116,126 @@ function Home() {
       minH="100vh"
       w="100%"
       display="flex"
+      flexDirection="column"
       alignItems="center"
-      justifyContent="center"
       px={{ base: '4' }}
-      py={{ base: '5', md: '10' }}
+      overflowY="auto"
     >
-      <VStack 
-        gap="20"
-        maxW="40.5rem" 
+      {/* Main content — vertically centered in available space */}
+      <Flex
+        flex="1"
         w="100%"
+        maxW="40.5rem"
+        alignItems="center"
+        justifyContent="center"
+        py={{ base: '5', md: '10' }}
       >
-        <VStack gap="4" align="center">
-          <Box
-            as="img"
-            src={foodPng}
-            alt=""
-            w={FOOD_IMAGE_SIZE}
-            h={FOOD_IMAGE_SIZE}
-            animation={`${spin} ${FOOD_SPIN_DURATION} linear infinite`}
-          />
-          <Heading
-            as="h1"
-            textStyle="heading"
-            textAlign="center"
-            color="neutral.ink"
-            minH="3.5rem"
-            sx={{
-              '@media (max-width: 47.9375rem)': {
-                textStyle: 'title2',
-                minHeight: '2.75rem',
-              },
-              '@media (max-width: 29.9375rem)': {
-                textStyle: 'title1',
-                minHeight: '2.25rem',
-              },
-            }}
-          >
-            {displayed}
+        <VStack gap="20" w="100%">
+          <VStack gap="4" align="center">
             <Box
-              as="span"
-              animation={`${blink} ${CURSOR_BLINK_SPEED} step-start infinite`}
+              as="img"
+              src={foodPng}
+              alt=""
+              w={FOOD_IMAGE_SIZE}
+              h={FOOD_IMAGE_SIZE}
+              animation={`${spin} ${FOOD_SPIN_DURATION} linear infinite`}
+            />
+            <Heading
+              as="h1"
+              textStyle="heading"
+              textAlign="center"
+              color="neutral.ink"
+              h="80px"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              sx={{
+                '@media (max-width: 47.9375rem)': {
+                  textStyle: 'title2',
+                  height: '48px',
+                },
+                '@media (max-width: 29.9375rem)': {
+                  textStyle: 'title1',
+                  height: '56px',
+                },
+              }}
             >
-              |
+              {displayed}
+              <Box
+                as="span"
+                animation={`${blink} ${CURSOR_BLINK_SPEED} step-start infinite`}
+              >
+                |
+              </Box>
+            </Heading>
+          </VStack>
+
+          <VStack gap="4" w="100%" align="stretch">
+            <IngredientSearch
+              selectedIngredients={selectedIngredients}
+              onToggleIngredient={toggleIngredient}
+            />
+
+            {/* Quick-pick popular ingredients */}
+            <Flex
+              wrap="wrap"
+              gap="3"
+              justify="center"
+              alignContent="flex-start"
+              minH={{ base: '10rem', md: '6.5rem' }}
+            >
+              {POPULAR_INGREDIENTS.filter((ingredient) => !selectedIngredients.includes(ingredient)).map((ingredient) => (
+                <Chip
+                  key={ingredient}
+                  text={ingredient}
+                  onClick={() => toggleIngredient(ingredient)}
+                  isSelected={false}
+                  size="Small"
+                />
+              ))}
+            </Flex>
+          </VStack>
+        </VStack>
+      </Flex>
+
+      {/* Bottom section — pinned to bottom, button never moves */}
+      <VStack
+        w="100%"
+        maxW="40.5rem"
+        gap="4"
+        pb={{ base: '8', md: '12' }}
+        align="center"
+      >
+        {/* Error — space always reserved so button stays put */}
+        <Box
+          w="100%"
+          maxW="60"
+          minH="44px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          {error && (
+            <Box
+              bg="red.50"
+              border="1px solid"
+              borderColor="red.200"
+              borderRadius="md"
+              px="4"
+              py="3"
+              w="100%"
+            >
+              <Text textStyle="bodyRegular" color="red.600" textAlign="center">
+                {error}
+              </Text>
             </Box>
-          </Heading>
-        </VStack>
+          )}
+        </Box>
 
-        <VStack gap="4" w="100%" align="stretch">
-          <IngredientSearch
-            selectedIngredients={selectedIngredients}
-            onToggleIngredient={toggleIngredient}
-          />
-
-          {/* Quick-pick popular ingredients */}
-          <Flex 
-            wrap="wrap" 
-            gap="3"
-            justify="center" 
-            align="center"
-            minH={{ base: 'auto', md: '26' }}
-          >
-            {POPULAR_INGREDIENTS.filter((ingredient) => !selectedIngredients.includes(ingredient)).map((ingredient) => (
-              <Chip
-                key={ingredient}
-                text={ingredient}
-                onClick={() => toggleIngredient(ingredient)}
-                isSelected={false}
-                size="Small"
-              />
-            ))}
-          </Flex>
-        </VStack>
-
-        {/* Error Message */}
-        {error && (
-          <Box
-            bg="red.50"
-            border="1px solid"
-            borderColor="red.200"
-            borderRadius="md"
-            px="4"
-            py="3"
-            w="100%"
-            maxW="60"
-          >
-            <Text textStyle="bodyRegular" color="red.600" textAlign="center">
-              {error}
-            </Text>
-          </Box>
-        )}
-
-        <Button 
+        <Button
           variant="primary"
           icon={false}
-          w={{ base: '100%', md: '60' }} 
+          w={{ base: '100%', md: '60' }}
           maxW={{ base: '60' }}
           onClick={handleCook}
           disabled={selectedIngredients.length === 0}

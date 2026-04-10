@@ -320,6 +320,7 @@ function ResultList() {
                       key={recipe.id}
                       onClick={() => handleRecipeClick(recipe)}
                       cursor="pointer"
+                      h="100%"
                     >
                       <RecipeCard
                         id={recipe.id}

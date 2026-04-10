@@ -36,6 +36,7 @@ function RecipeCard({
       borderRadius="sm"
       overflow="hidden"
       w="100%"
+      h="100%"
       display="flex"
       flexDirection="column"
       cursor="pointer"
@@ -55,6 +56,7 @@ function RecipeCard({
         align="stretch"
         px="8"
         py="10"
+        flex="1"
       >
         {/* Title */}
         <Box
