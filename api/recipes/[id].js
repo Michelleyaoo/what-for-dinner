@@ -3,6 +3,11 @@ import {
   RECIPE_DETAILS_SYSTEM_PROMPT, 
   buildRecipeDetailsUserPrompt 
 } from '../../src/prompts/recipeDetails.js';
+import {
+  buildDetailsCacheKey,
+  getFromServerCache,
+  saveToServerCache
+} from '../utils/cache.js';
 
 /**
  * API Endpoint: Get detailed recipe instructions
@@ -43,6 +48,14 @@ export default async function handler(req, res) {
       });
     }
 
+    // Check server-side cache first
+    const cacheKey = buildDetailsCacheKey(recipeId);
+    const cached = await getFromServerCache(cacheKey);
+    if (cached) {
+      console.log('Server cache hit for details:', recipeId);
+      return res.status(200).json(typeof cached === 'string' ? JSON.parse(cached) : cached);
+    }
+
     // Check for API key
     if (!process.env.OPENAI_API_KEY) {
       console.error('OPENAI_API_KEY is not configured');
@@ -69,26 +82,55 @@ export default async function handler(req, res) {
       maxPrepTime
     });
 
-    // Call OpenAI API
-    console.log(`Generating details for recipe: ${recipeId} (${recipeTitle})`);
-    const completion = await openai.chat.completions.create({
+    const useStreaming = req.body?.stream === true;
+
+    console.log(`Generating details for recipe: ${recipeId} (${recipeTitle})${useStreaming ? ' [streaming]' : ''}`);
+
+    const openaiParams = {
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.7,
-      max_tokens: 2000,
-    });
+      max_completion_tokens: 2000,
+    };
 
-    // Parse the response
+    if (useStreaming) {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      });
+
+      const stream = await openai.chat.completions.create({
+        ...openaiParams,
+        stream: true,
+      });
+
+      let fullContent = '';
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content || '';
+        if (delta) {
+          fullContent += delta;
+          res.write(`data: ${JSON.stringify({ type: 'chunk', content: delta })}\n\n`);
+        }
+      }
+
+      const recipeDetails = JSON.parse(fullContent);
+      saveToServerCache(cacheKey, recipeDetails).catch(() => {});
+      res.write(`data: ${JSON.stringify({ type: 'done', data: recipeDetails })}\n\n`);
+      return res.end();
+    }
+
+    const completion = await openai.chat.completions.create(openaiParams);
     const responseText = completion.choices[0].message.content;
     const recipeDetails = JSON.parse(responseText);
 
     console.log(`Generated details for recipe: ${recipeId} successfully`);
 
-    // Return the recipe details
+    saveToServerCache(cacheKey, recipeDetails).catch(() => {});
+
     return res.status(200).json(recipeDetails);
 
   } catch (error) {

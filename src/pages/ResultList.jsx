@@ -5,9 +5,10 @@ import Button from '../components/Button'
 import IngredientSearch from '../components/IngredientSearch'
 import RecipeCard from '../components/RecipeCard'
 import RecipeCardSkeleton from '../components/RecipeCardSkeleton'
-import { searchRecipes, getErrorMessage } from '../utils/api'
+import RecipeSearchLoading from '../components/RecipeSearchLoading'
+import { searchRecipes, getRecipeDetails, getRecipeImages, getErrorMessage } from '../utils/api'
 import { ingredientsFromUrlParam, ingredientsToUrlParam, removeEmojiFromIngredient, formatIngredientsForDisplay } from '../utils/ingredients'
-import { getSearchCacheKey, saveToCache, getFromCache } from '../utils/recipeCache'
+import { getSearchCacheKey, getDetailsCacheKey, saveToCache, getFromCache } from '../utils/recipeCache'
 
 function ResultList() {
   const navigate = useNavigate()
@@ -19,6 +20,7 @@ function ResultList() {
   const [selectedIngredients, setSelectedIngredients] = useState([])
   const [searchedIngredients, setSearchedIngredients] = useState([])
   const [searchContext, setSearchContext] = useState(null)
+  const [recipeImages, setRecipeImages] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const isFetchingRef = useRef(false)
@@ -49,6 +51,36 @@ function ResultList() {
     }
   }, [location.state, searchParams, navigate])
 
+  const fetchImagesInBackground = (recipes) => {
+    const recipesNeedingImages = recipes.filter(r => !r.imageUrl && r.imageSearchKeywords?.length > 0)
+    if (recipesNeedingImages.length === 0) return
+
+    getRecipeImages(
+      recipesNeedingImages.map(r => ({ id: r.id, imageSearchKeywords: r.imageSearchKeywords }))
+    ).then(({ images }) => {
+      setRecipeImages(prev => ({ ...prev, ...images }))
+    }).catch(() => {})
+  }
+
+  const prefetchTopRecipeDetails = (recipes, context) => {
+    recipes.slice(0, 2).forEach(recipe => {
+      const cacheKey = getDetailsCacheKey(recipe.id)
+      if (getFromCache(cacheKey)) return
+
+      getRecipeDetails({
+        recipeId: recipe.id,
+        recipeTitle: recipe.title,
+        ingredients: context.ingredients,
+        matchedIngredients: recipe.matchedIngredients || [],
+        additionalIngredients: recipe.additionalIngredients || [],
+        servings: context.servings || 2,
+        maxPrepTime: context.maxPrepTime
+      }).then(details => {
+        saveToCache(cacheKey, details)
+      }).catch(() => {})
+    })
+  }
+
   const fetchRecipes = async (ingredients, params = {}) => {
     if (isFetchingRef.current) return
     isFetchingRef.current = true
@@ -60,6 +92,7 @@ function ResultList() {
       setRecipes(cachedData.recipes)
       setTotalResults(cachedData.totalResults)
       setSearchContext(cachedData.searchContext)
+      fetchImagesInBackground(cachedData.recipes)
       isFetchingRef.current = false
       return
     }
@@ -86,6 +119,9 @@ function ResultList() {
         totalResults: data.totalResults,
         searchContext: searchParams
       })
+
+      fetchImagesInBackground(data.recipes)
+      prefetchTopRecipeDetails(data.recipes, searchParams)
     } catch (err) {
       console.error('Error fetching recipes:', err)
       setError(getErrorMessage(err))
@@ -129,10 +165,9 @@ function ResultList() {
   }
 
   const handleRecipeClick = (recipe) => {
-    // Navigate to recipe detail with full context
     navigate(`/recipe/${recipe.id}`, {
       state: {
-        recipe,
+        recipe: { ...recipe, imageUrl: recipeImages[recipe.id] || recipe.imageUrl },
         searchContext
       }
     })
@@ -217,33 +252,8 @@ function ResultList() {
           spacing={{ base: '5', md: '10' }}
           align="stretch"
         >
-          {/* Loading State - Skeleton Cards */}
-          {isLoading && (
-            <>
-              <Heading
-                as="h1"
-                textStyle="title2"
-                color="neutral.ink"
-              >
-                Finding delicious recipes...
-              </Heading>
-
-              <Box
-                display="grid"
-                gridTemplateColumns={{
-                  base: 'repeat(1, 1fr)',
-                  sm: 'repeat(2, 1fr)',
-                  md: 'repeat(3, 1fr)',
-                  xl: 'repeat(4, 1fr)',
-                }}
-                gap={{ base: '4', md: '8' }}
-              >
-                {[...Array(8)].map((_, index) => (
-                  <RecipeCardSkeleton key={index} />
-                ))}
-              </Box>
-            </>
-          )}
+          {/* Loading State */}
+          {isLoading && <RecipeSearchLoading />}
 
           {/* Error State */}
           {error && !isLoading && (
@@ -315,7 +325,7 @@ function ResultList() {
                         prepTime={recipe.prepTime}
                         ingredients={ingredientsWithStates}
                         image={recipe.image || '1'}
-                        imageUrl={recipe.imageUrl}
+                        imageUrl={recipeImages[recipe.id] || recipe.imageUrl}
                       />
                     </Box>
                   )

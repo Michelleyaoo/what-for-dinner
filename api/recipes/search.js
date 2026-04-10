@@ -3,6 +3,11 @@ import {
   RECIPE_SEARCH_SYSTEM_PROMPT, 
   buildRecipeSearchUserPrompt 
 } from '../../src/prompts/recipeSearch.js';
+import {
+  buildSearchCacheKey,
+  getFromServerCache,
+  saveToServerCache
+} from '../utils/cache.js';
 
 /**
  * API Endpoint: Search for recipes based on ingredients
@@ -33,6 +38,14 @@ export default async function handler(req, res) {
       });
     }
 
+    // Check server-side cache first
+    const cacheKey = buildSearchCacheKey(ingredients, maxPrepTime, servings, dietaryPreferences);
+    const cached = await getFromServerCache(cacheKey);
+    if (cached) {
+      console.log('Server cache hit for search:', cacheKey);
+      return res.status(200).json(typeof cached === 'string' ? JSON.parse(cached) : cached);
+    }
+
     // Check for API key
     if (!process.env.OPENAI_API_KEY) {
       console.error('OPENAI_API_KEY is not configured');
@@ -59,14 +72,13 @@ export default async function handler(req, res) {
     // Call OpenAI API
     console.log('Calling OpenAI API for recipe search...');
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.7,
-      max_tokens: 3000,
+      max_completion_tokens: 3000,
     });
 
     // Parse the response
@@ -75,25 +87,9 @@ export default async function handler(req, res) {
 
     console.log(`Generated ${recipeData.totalResults} recipes successfully`);
 
-    // Fetch a real food photo from Unsplash for each recipe in parallel
-    if (recipeData.recipes && process.env.UNSPLASH_ACCESS_KEY) {
-      recipeData.recipes = await Promise.all(
-        recipeData.recipes.map(async (recipe) => {
-          try {
-            const keywords = (recipe.imageSearchKeywords || []).join(' ')
-            const response = await fetch(
-              `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keywords)}&per_page=1&orientation=landscape&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
-            )
-            const data = await response.json()
-            return { ...recipe, imageUrl: data.results?.[0]?.urls?.regular || null }
-          } catch {
-            return { ...recipe, imageUrl: null }
-          }
-        })
-      )
-    }
+    // Save to server-side cache (non-blocking)
+    saveToServerCache(cacheKey, recipeData).catch(() => {});
 
-    // Return the recipes
     return res.status(200).json(recipeData);
 
   } catch (error) {

@@ -84,6 +84,76 @@ export async function getRecipeDetails(recipeContext) {
 }
 
 /**
+ * Get detailed recipe instructions via SSE streaming.
+ * Returns faster TTFT and allows progress tracking.
+ * Falls back to the standard non-streaming call on error.
+ */
+export async function getRecipeDetailsStreaming(recipeContext, onChunk) {
+  const response = await fetch(`${API_BASE_URL}/api/recipes/${recipeContext.recipeId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...recipeContext, stream: true }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `API error: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split('\n\n');
+    buffer = parts.pop();
+
+    for (const part of parts) {
+      if (!part.startsWith('data: ')) continue;
+      try {
+        const event = JSON.parse(part.slice(6));
+        if (event.type === 'done') return event.data;
+        if (event.type === 'chunk' && onChunk) onChunk(event.content);
+      } catch {
+        // skip malformed event
+      }
+    }
+  }
+
+  throw new Error('Stream ended without complete recipe data');
+}
+
+/**
+ * Fetch Unsplash images for recipes (called after search results load)
+ * @param {Array<{id: string, imageSearchKeywords: string[]}>} recipes
+ * @returns {Promise<{images: Object<string, string|null>}>}
+ */
+export async function getRecipeImages(recipes) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/recipes/images`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ recipes })
+    });
+
+    if (!response.ok) {
+      return { images: {} };
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching recipe images:', error);
+    return { images: {} };
+  }
+}
+
+/**
  * Fetch YouTube Shorts videos for a recipe
  * @param {Object} params
  * @param {string[]} params.videoSearchTerms - Search terms from recipe details

@@ -7,7 +7,8 @@ import Label from '../components/Label'
 import Image from '../components/Image'
 import ShortVideo from '../components/ShortVideo'
 import RecipeDetailSkeleton from '../components/RecipeDetailSkeleton'
-import { getRecipeDetails, getRecipeVideos, getErrorMessage } from '../utils/api'
+import RecipeDetailLoading from '../components/RecipeDetailLoading'
+import { getRecipeDetails, getRecipeDetailsStreaming, getRecipeVideos, getErrorMessage } from '../utils/api'
 import { ingredientsToUrlParam } from '../utils/ingredients'
 import { getDetailsCacheKey, saveToCache, getFromCache } from '../utils/recipeCache'
 
@@ -217,7 +218,12 @@ function RecipeDetail() {
         maxPrepTime: searchContext?.maxPrepTime
       }
 
-      const details = await getRecipeDetails(context)
+      let details;
+      try {
+        details = await getRecipeDetailsStreaming(context);
+      } catch {
+        details = await getRecipeDetails(context);
+      }
       setRecipeDetails(details)
 
       // Save to cache
@@ -262,9 +268,9 @@ function RecipeDetail() {
     setIsExpanded(!isExpanded)
   }
 
-  // Loading state - show skeleton
+  // Loading state
   if (isLoading || !recipe) {
-    return <RecipeDetailSkeleton />
+    return <RecipeDetailLoading />
   }
 
   // Error state
