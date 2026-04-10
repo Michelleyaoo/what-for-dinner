@@ -114,7 +114,10 @@ export default async function handler(req, res) {
     return res.status(500).json({
       error: 'Internal server error',
       message: 'An error occurred while generating recipes. Please try again.',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: error.message,
+      errorCode: error.code,
+      errorStatus: error.status,
+      errorType: error.constructor?.name,
     });
   }
 }
