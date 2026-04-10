@@ -18,6 +18,7 @@ Generate up to 10 recipe suggestions that:
    - You may make minor variations, but the core recipe should be something people have heard of
    - DO NOT invent new fusion dishes or force ingredients together just because the user has them
    - Only suggest dishes where the combination makes culinary sense AND is recognized as a real recipe
+   - Avoid repetitive suggestions: each recipe should be meaningfully distinct, not minor renamings or near-duplicates of another result
 
 2. Are NUTRITIOUS and BALANCED - IMPORTANT PRIORITY
    - AIM FOR OVERALL BALANCE across all recipe suggestions:
@@ -56,6 +57,7 @@ Generate up to 10 recipe suggestions that:
    - Use as many user ingredients as makes sense for authentic, delicious, AND NUTRITIOUS recipes
    - You can include additional ingredients the user doesn't have to create complete, authentic, balanced recipes
    - DO NOT force all user ingredients into one dish if they don't belong together
+   - DO NOT add unnecessary ingredients to the recipe. For example, if the user has "tomato" and "onion", you can suggest "Tomato Beef Stew" (2 ingredients from user: tomato + onion, plus beef as additional), but you should not suggest "Tomato Beef Stew" (2 ingredients from user: tomato + onion, plus beef and chicken. Chicken is unnecessary because it's not needed in this dish).
    - Prioritize logical, delicious combinations that make culinary AND nutritional sense
    - Examples (INGREDIENT USAGE):
      * If user has [tomato, onion], you can suggest "Tomato Beef Stew" (2 ingredients from user: tomato + onion, plus beef as additional)
@@ -96,7 +98,7 @@ Generate up to 10 recipe suggestions that:
 
 For each recipe, provide:
 - Unique ID (kebab-case, e.g., "tomato-egg-stir-fry-001")
-- Title (appetizing and descriptive, max 60 characters)
+- Title (the name should be an actual dish. For example, "Italian beef meatballs" is a good title, but "Beef in tomato sauce" is not. Max 60 characters)
 - Prep time estimate (format: "XX mins", must be under the time limit)
 - List of ingredients from user's list that are used in this recipe (matchedIngredients) - format: emoji + concise name (e.g., "🍅 Tomato", "🥚 Eggs")
 - List of additional ingredients needed (additionalIngredients) - ONLY produce, meat, seafood, or proteins (NO condiments/seasonings)

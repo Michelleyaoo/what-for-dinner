@@ -52,14 +52,16 @@ function ResultList() {
   }, [location.state, searchParams, navigate])
 
   const fetchImagesInBackground = (recipes) => {
-    const recipesNeedingImages = recipes.filter(r => !r.imageUrl && r.imageSearchKeywords?.length > 0)
+    const recipesNeedingImages = recipes.filter(r => r.title)
+    console.log('🖼️ Fetching images for', recipesNeedingImages.length, 'recipes')
     if (recipesNeedingImages.length === 0) return
 
     getRecipeImages(
-      recipesNeedingImages.map(r => ({ id: r.id, imageSearchKeywords: r.imageSearchKeywords }))
+      recipesNeedingImages.map(r => ({ id: r.id, title: r.title, imageSearchKeywords: r.imageSearchKeywords }))
     ).then(({ images }) => {
+      console.log('🖼️ Images received:', images)
       setRecipeImages(prev => ({ ...prev, ...images }))
-    }).catch(() => {})
+    }).catch((err) => { console.error('🖼️ Image fetch error:', err) })
   }
 
   const prefetchTopRecipeDetails = (recipes, context) => {
