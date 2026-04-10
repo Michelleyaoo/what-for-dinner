@@ -5,6 +5,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import Button from './Button'
 import cookingAnimation from '../assets/animations/food/cooking.json'
+import spaghettiAnimation from '../assets/animations/food/spaghetti.json'
+import steamingBowlAnimation from '../assets/animations/food/steaming-bowl.json'
+
+const FOOD_ANIMATIONS = [cookingAnimation, spaghettiAnimation, steamingBowlAnimation]
 
 const MESSAGES = [
   'Looking into recipe details...',
@@ -15,6 +19,9 @@ const MESSAGES = [
 function RecipeDetailLoading() {
   const navigate = useNavigate()
   const [messageIndex, setMessageIndex] = useState(0)
+  const [animation] = useState(
+    () => FOOD_ANIMATIONS[Math.floor(Math.random() * FOOD_ANIMATIONS.length)]
+  )
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -41,7 +48,7 @@ function RecipeDetailLoading() {
         >
           <Box w={{ base: '200px', md: '240px' }} h={{ base: '200px', md: '240px' }}>
             <Lottie
-              animationData={cookingAnimation}
+              animationData={animation}
               loop
               style={{ width: '100%', height: '100%' }}
             />

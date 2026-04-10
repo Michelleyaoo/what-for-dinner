@@ -123,10 +123,17 @@ export default async function handler(req, res) {
         console.log(`Unsplash fallback for "${query}"`);
         try {
           const upRes = await fetch(
-            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
+            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=5&orientation=landscape&client_id=${process.env.UNSPLASH_ACCESS_KEY}`
           );
           const upData = await upRes.json();
-          imageUrl = upData.results?.[0]?.urls?.regular || null;
+          const results = upData.results || [];
+          if (results.length > 0) {
+            // Pick deterministically from the pool using the recipe ID so the
+            // same recipe always gets the same image, but different recipes
+            // with similar keywords get varied images
+            const hash = recipe.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+            imageUrl = results[hash % results.length]?.urls?.regular || null;
+          }
         } catch (err) {
           console.warn(`Unsplash error for "${query}":`, err.message);
         }

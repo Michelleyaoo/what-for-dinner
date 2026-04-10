@@ -151,7 +151,7 @@ function RecipeDetail() {
   const [error, setError] = useState(null)
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
-  const [videos, setVideos] = useState(mockVideos)
+  const [videos, setVideos] = useState(null) // null = loading, [] = none found, [...] = loaded
   const [selectedVideo, setSelectedVideo] = useState(null)
 
   useEffect(() => {
@@ -180,12 +180,12 @@ function RecipeDetail() {
     }
 
     const result = await getRecipeVideos({ videoSearchTerms, recipeTitle })
-    if (result && result.length > 0) {
-      setVideos(result)
-      saveToCache(videosCacheKey, result)
+    const safeResult = Array.isArray(result) ? result : []
+    setVideos(safeResult)
+    saveToCache(videosCacheKey, safeResult)
+    if (safeResult.length > 0) {
       console.log('💾 Saved recipe videos to cache')
     }
-    // If result is empty, videos state keeps the mockVideos fallback
   }
 
   const fetchRecipeDetails = async (recipeData, searchContext) => {
@@ -588,69 +588,95 @@ function RecipeDetail() {
                   🍳 See how others make it
                 </Box>
 
-                {/* Navigation Arrows */}
-                <HStack spacing="4">
-                  <Button
-                    variant="tertiary"
-                    icon={true}
-                    iconElement={<ArrowLeft size={20} weight="regular" />}
-                    onClick={handlePrevVideo}
-                    disabled={currentVideoIndex === 0}
-                  >
-                  </Button>
-                  <Button
-                    variant="tertiary"
-                    icon={true}
-                    iconElement={<ArrowRight size={20} weight="regular" />}
-                    onClick={handleNextVideo}
-                    disabled={currentVideoIndex >= videos.length - 1}
-                  >
-                  </Button>
-                </HStack>
+                {/* Navigation Arrows — only shown when real videos are loaded */}
+                {videos !== null && videos.length > 0 && (
+                  <HStack spacing="4">
+                    <Button
+                      variant="tertiary"
+                      icon={true}
+                      iconElement={<ArrowLeft size={20} weight="regular" />}
+                      onClick={handlePrevVideo}
+                      disabled={currentVideoIndex === 0}
+                    >
+                    </Button>
+                    <Button
+                      variant="tertiary"
+                      icon={true}
+                      iconElement={<ArrowRight size={20} weight="regular" />}
+                      onClick={handleNextVideo}
+                      disabled={currentVideoIndex >= videos.length - 1}
+                    >
+                    </Button>
+                  </HStack>
+                )}
               </Flex>
 
-              {/* Video Carousel */}
-              <Box
-                w="100%"
-                overflowX="hidden"
-                overflowY="visible"
-                pt="1"
-                mt="-1"
-              >
-                <Flex
-                  gap="6"
-                  transition="transform 0.3s ease"
-                  transform={`translateX(-${currentVideoIndex * (240 + 24)}px)`}
+              {/* Loading state — non-clickable placeholder cards */}
+              {videos === null && (
+                <Box w="100%" overflowX="hidden" pt="1" mt="-1">
+                  <Flex gap="6">
+                    {mockVideos.map((v) => (
+                      <ShortVideo key={v.id} thumbnail={null} />
+                    ))}
+                  </Flex>
+                </Box>
+              )}
+
+              {/* Empty state */}
+              {videos !== null && videos.length === 0 && (
+                <Box
+                  py="10"
+                  textAlign="center"
                 >
-                  {videos.map((video) => (
-                    <ShortVideo
-                      key={video.id}
-                      thumbnail={video.thumbnail}
-                      alt={`${fullRecipe.title} video ${video.id}`}
-                      onPlay={() => setSelectedVideo(video)}
-                    />
-                  ))}
-                </Flex>
-              </Box>
+                  <Box textStyle="bodyRegular" color="grey.500">
+                    Seems like no one cooked this yet 🥲
+                  </Box>
+                </Box>
+              )}
 
-              {/* Carousel Dots */}
-              <Flex
-                justify="center"
-                gap="2"
-              >
-                {videos.map((video, index) => (
+              {/* Real videos carousel */}
+              {videos !== null && videos.length > 0 && (
+                <>
                   <Box
-                    key={video.id}
-                    w="2"
-                    h="2"
-                    borderRadius="full"
-                    bg={index === currentVideoIndex ? 'neutral.ink' : 'grey.300'}
-                    cursor="pointer"
-                    onClick={() => setCurrentVideoIndex(index)}
-                    transition="background 0.2s ease"
-                  />
-                ))}
-              </Flex>
+                    w="100%"
+                    overflowX="hidden"
+                    overflowY="visible"
+                    pt="1"
+                    mt="-1"
+                  >
+                    <Flex
+                      gap="6"
+                      transition="transform 0.3s ease"
+                      transform={`translateX(-${currentVideoIndex * (240 + 24)}px)`}
+                    >
+                      {videos.map((video) => (
+                        <ShortVideo
+                          key={video.id}
+                          thumbnail={video.thumbnail}
+                          alt={`${fullRecipe.title} video ${video.id}`}
+                          onPlay={() => setSelectedVideo(video)}
+                        />
+                      ))}
+                    </Flex>
+                  </Box>
+
+                  {/* Carousel Dots */}
+                  <Flex justify="center" gap="2">
+                    {videos.map((video, index) => (
+                      <Box
+                        key={video.id}
+                        w="2"
+                        h="2"
+                        borderRadius="full"
+                        bg={index === currentVideoIndex ? 'neutral.ink' : 'grey.300'}
+                        cursor="pointer"
+                        onClick={() => setCurrentVideoIndex(index)}
+                        transition="background 0.2s ease"
+                      />
+                    ))}
+                  </Flex>
+                </>
+              )}
             </VStack>
 
             {/* YouTube Video Modal */}
