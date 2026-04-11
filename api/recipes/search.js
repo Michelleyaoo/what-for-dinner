@@ -8,6 +8,10 @@ import {
   getFromServerCache,
   saveToServerCache
 } from '../utils/cache.js';
+import { validateEnv } from '../utils/env.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * API Endpoint: Search for recipes based on ingredients
@@ -16,13 +20,14 @@ import {
  * Returns: { recipes, totalResults }
  */
 export default async function handler(req, res) {
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
 
+  const envError = validateEnv(['OPENAI_API_KEY']);
+  if (envError) return res.status(500).json(envError);
+
   try {
-    // Extract request data
     const {
       ingredients = [],
       maxPrepTime = 30,
@@ -30,7 +35,6 @@ export default async function handler(req, res) {
       dietaryPreferences = ['none']
     } = req.body;
 
-    // Validate required fields
     if (!ingredients || ingredients.length === 0) {
       return res.status(400).json({ 
         error: 'Missing required field: ingredients',
@@ -38,7 +42,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Check server-side cache first
     const cacheKey = buildSearchCacheKey(ingredients, maxPrepTime, servings, dietaryPreferences);
     const cached = await getFromServerCache(cacheKey);
     if (cached) {
@@ -46,22 +49,9 @@ export default async function handler(req, res) {
       return res.status(200).json(typeof cached === 'string' ? JSON.parse(cached) : cached);
     }
 
-    // Check for API key
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is not configured');
-      return res.status(500).json({ 
-        error: 'Server configuration error',
-        message: 'OpenAI API key is not configured.'
-      });
-    }
+    const rateLimited = await checkRateLimit(req, res);
+    if (rateLimited) return;
 
-    // Initialize OpenAI client
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    // Build prompts using imported functions
-    const systemPrompt = RECIPE_SEARCH_SYSTEM_PROMPT;
     const userPrompt = buildRecipeSearchUserPrompt({
       ingredients,
       maxPrepTime,
@@ -69,17 +59,16 @@ export default async function handler(req, res) {
       dietaryPreferences
     });
 
-    // Call OpenAI API
     console.log('Calling OpenAI API for recipe search...');
     const completion = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: RECIPE_SEARCH_SYSTEM_PROMPT },
         { role: 'user', content: userPrompt }
       ],
       response_format: { type: 'json_object' },
       max_completion_tokens: 3000,
-    });
+    }, { timeout: 25_000 });
 
     // Parse the response
     const responseText = completion.choices[0].message.content;

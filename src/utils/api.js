@@ -128,6 +128,20 @@ export async function getRecipeDetailsStreaming(recipeContext, onChunk) {
 }
 
 /**
+ * Try to fetch cached recipe details by ID (GET, no generation).
+ * Returns null if the recipe is not cached server-side.
+ */
+export async function getCachedRecipeDetails(recipeId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/recipes/${recipeId}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Fetch Unsplash images for recipes (called after search results load)
  * @param {Array<{id: string, imageSearchKeywords: string[]}>} recipes
  * @returns {Promise<{images: Object<string, string|null>}>}

@@ -53,15 +53,15 @@ function ResultList() {
 
   const fetchImagesInBackground = (recipes) => {
     const recipesNeedingImages = recipes.filter(r => r.title)
-    console.log('🖼️ Fetching images for', recipesNeedingImages.length, 'recipes')
+    if (import.meta.env.DEV) console.log('🖼️ Fetching images for', recipesNeedingImages.length, 'recipes')
     if (recipesNeedingImages.length === 0) return
 
     getRecipeImages(
       recipesNeedingImages.map(r => ({ id: r.id, title: r.title, imageSearchKeywords: r.imageSearchKeywords }))
     ).then(({ images }) => {
-      console.log('🖼️ Images received:', images)
+      if (import.meta.env.DEV) console.log('🖼️ Images received:', images)
       setRecipeImages(prev => ({ ...prev, ...images }))
-    }).catch((err) => { console.error('🖼️ Image fetch error:', err) })
+    }).catch((err) => { if (import.meta.env.DEV) console.error('🖼️ Image fetch error:', err) })
   }
 
   const prefetchTopRecipeDetails = (recipes, context) => {
@@ -301,14 +301,11 @@ function ResultList() {
                 gap={{ base: '4', md: '8' }}
               >
                 {recipes.map((recipe) => {
-                  // Format ingredients with proper states
                   const ingredientsWithStates = [
-                    // Matched ingredients - Available (primary color)
                     ...(recipe.matchedIngredients || []).map(ing => ({
                       text: ing,
                       state: 'Available'
                     })),
-                    // Additional ingredients - Missing (grey color)
                     ...(recipe.additionalIngredients || []).map(ing => ({
                       text: ing,
                       state: 'Missing'
@@ -316,21 +313,15 @@ function ResultList() {
                   ]
 
                   return (
-                    <Box
+                    <RecipeCard
                       key={recipe.id}
+                      title={recipe.title}
+                      prepTime={recipe.prepTime}
+                      ingredients={ingredientsWithStates}
+                      image={recipe.image || '1'}
+                      imageUrl={recipeImages[recipe.id] || recipe.imageUrl}
                       onClick={() => handleRecipeClick(recipe)}
-                      cursor="pointer"
-                      h="100%"
-                    >
-                      <RecipeCard
-                        id={recipe.id}
-                        title={recipe.title}
-                        prepTime={recipe.prepTime}
-                        ingredients={ingredientsWithStates}
-                        image={recipe.image || '1'}
-                        imageUrl={recipeImages[recipe.id] || recipe.imageUrl}
-                      />
-                    </Box>
+                    />
                   )
                 })}
               </Box>

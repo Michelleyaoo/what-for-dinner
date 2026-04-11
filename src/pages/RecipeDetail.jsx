@@ -6,139 +6,12 @@ import Button from '../components/Button'
 import Label from '../components/Label'
 import Image from '../components/Image'
 import ShortVideo from '../components/ShortVideo'
-import RecipeDetailSkeleton from '../components/RecipeDetailSkeleton'
 import RecipeDetailLoading from '../components/RecipeDetailLoading'
-import { getRecipeDetails, getRecipeDetailsStreaming, getRecipeVideos, getErrorMessage } from '../utils/api'
+import { getRecipeDetails, getRecipeDetailsStreaming, getRecipeVideos, getCachedRecipeDetails, getErrorMessage } from '../utils/api'
 import { ingredientsToUrlParam } from '../utils/ingredients'
 import { getDetailsCacheKey, saveToCache, getFromCache } from '../utils/recipeCache'
 
-// Mock video data - TODO: Integrate TikTok/Instagram API
-const mockVideos = [
-  { id: 1, thumbnail: null, link: 'https://example.com/video1' },
-  { id: 2, thumbnail: null, link: 'https://example.com/video2' },
-  { id: 3, thumbnail: null, link: 'https://example.com/video3' },
-  { id: 4, thumbnail: null, link: 'https://example.com/video4' },
-  { id: 5, thumbnail: null, link: 'https://example.com/video5' }
-]
-
-// Keep old mock data for fallback (will be removed later)
-const recipeData = {
-  1: {
-    id: 1,
-    title: 'Tomato and egg stir fry',
-    description: 'Soft scrambled eggs coated in a sweet-savoury tomato sauce — a 20-minute comfort classic.',
-    prepTime: '20 mins',
-    servings: 2,
-    ingredients: ['🍅 Tomato', '🥚 Egg'],
-    image: '1',
-    instructions: {
-      ingredients: [
-        '3–4 eggs',
-        '2 medium tomatoes, cut into wedges',
-        '1 small garlic clove, minced (optional)',
-        'Green onions for garnish (optional)'
-      ],
-      seasoning: [
-        '1 tsp soy sauce (optional)',
-        '½–1 tsp sugar (helps balance acidity)',
-        'Salt to taste',
-        'Oil for cooking'
-      ],
-      steps: [
-        'Prep the eggs\nBeat eggs with a pinch of salt. Heat oil in a pan, pour eggs in, and gently scramble until just set but still soft. Remove and set aside.',
-        'Cook the tomatoes\nAdd a bit more oil. Sauté tomatoes until they soften and release juice (about 2–3 minutes). Add sugar + soy sauce (optional) for flavor.',
-        'Combine\nAdd eggs back into the pan, gently folding them into the tomatoes. Cook another 30–60 seconds until everything mingles into a glossy sauce.',
-        'Taste & adjust\nAdd salt or more sugar if needed depending on tomato acidity.',
-        'Serve\nTop with green onions. Serve over rice。'
-      ]
-    },
-    videos: [
-      { id: 1, thumbnail: null, link: 'https://example.com/video1' },
-      { id: 2, thumbnail: null, link: 'https://example.com/video2' },
-      { id: 3, thumbnail: null, link: 'https://example.com/video3' },
-      { id: 4, thumbnail: null, link: 'https://example.com/video4' },
-      { id: 5, thumbnail: null, link: 'https://example.com/video5' }
-    ]
-  },
-  2: {
-    id: 2,
-    title: 'Cozy beef stew',
-    description: 'Tender beef slow-cooked with root vegetables in a rich, savory broth.',
-    prepTime: '45 mins',
-    servings: 4,
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef', '🥕 Carrot'],
-    image: '2',
-    instructions: {
-      ingredients: [
-        '500g beef chuck, cubed',
-        '3 potatoes, cubed',
-        '2 carrots, sliced',
-        '1 onion, diced',
-        '2 cloves garlic, minced'
-      ],
-      seasoning: [
-        '2 cups beef broth',
-        '2 tbsp tomato paste',
-        '1 tsp thyme',
-        'Salt and pepper to taste',
-        '2 tbsp oil'
-      ],
-      steps: [
-        'Sear the beef\nHeat oil in a large pot. Season beef with salt and pepper, then sear until browned on all sides.',
-        'Sauté aromatics\nAdd onion and garlic, cook until softened.',
-        'Add liquids\nStir in tomato paste, then add beef broth and thyme. Bring to a boil.',
-        'Simmer\nReduce heat, cover, and simmer for 30 minutes.',
-        'Add vegetables\nAdd potatoes and carrots. Continue simmering for 15 minutes until vegetables are tender.'
-      ]
-    },
-    videos: [
-      { id: 1, thumbnail: null, link: 'https://example.com/video1' },
-      { id: 2, thumbnail: null, link: 'https://example.com/video2' },
-      { id: 3, thumbnail: null, link: 'https://example.com/video3' },
-      { id: 4, thumbnail: null, link: 'https://example.com/video4' },
-      { id: 5, thumbnail: null, link: 'https://example.com/video5' }
-    ]
-  },
-  3: {
-    id: 3,
-    title: 'Thai red curry with beef',
-    description: 'Aromatic Thai curry with tender beef and vegetables in a creamy coconut sauce.',
-    prepTime: '30 mins',
-    servings: 4,
-    ingredients: ['🧅 Onion', '🥔 Potato', '🥩 Beef'],
-    image: '3',
-    instructions: {
-      ingredients: [
-        '400g beef, sliced thin',
-        '2 potatoes, cubed',
-        '1 onion, sliced',
-        '1 red bell pepper, sliced',
-        '400ml coconut milk'
-      ],
-      seasoning: [
-        '3 tbsp red curry paste',
-        '1 tbsp fish sauce',
-        '1 tbsp sugar',
-        'Thai basil for garnish',
-        '2 tbsp oil'
-      ],
-      steps: [
-        'Fry curry paste\nHeat oil in a wok. Add curry paste and fry until fragrant.',
-        'Add beef\nAdd beef slices and stir-fry until slightly cooked.',
-        'Pour coconut milk\nAdd coconut milk, fish sauce, and sugar. Stir well.',
-        'Add vegetables\nAdd potatoes and simmer until tender, then add onion and bell pepper.',
-        'Finish\nCook for another 5 minutes. Garnish with Thai basil and serve with rice.'
-      ]
-    },
-    videos: [
-      { id: 1, thumbnail: null, link: 'https://example.com/video1' },
-      { id: 2, thumbnail: null, link: 'https://example.com/video2' },
-      { id: 3, thumbnail: null, link: 'https://example.com/video3' },
-      { id: 4, thumbnail: null, link: 'https://example.com/video4' },
-      { id: 5, thumbnail: null, link: 'https://example.com/video5' }
-    ]
-  }
-}
+const VIDEO_PLACEHOLDERS = Array.from({ length: 5 }, (_, i) => ({ id: i + 1 }))
 
 function RecipeDetail() {
   const navigate = useNavigate()
@@ -155,18 +28,38 @@ function RecipeDetail() {
   const [selectedVideo, setSelectedVideo] = useState(null)
 
   useEffect(() => {
-    // Get recipe from navigation state
     const recipeFromState = location.state?.recipe
     const searchContext = location.state?.searchContext
 
-    if (!recipeFromState) {
-      // No recipe in state, redirect to home
-      navigate('/')
+    if (recipeFromState) {
+      setRecipe(recipeFromState)
+      fetchRecipeDetails(recipeFromState, searchContext)
       return
     }
 
-    setRecipe(recipeFromState)
-    fetchRecipeDetails(recipeFromState, searchContext)
+    // Deep-linked URL: try server cache, then sessionStorage
+    const cacheKey = getDetailsCacheKey(id)
+    const cachedDetails = getFromCache(cacheKey)
+    if (cachedDetails) {
+      setRecipe({ id, title: cachedDetails.title || 'Recipe' })
+      setRecipeDetails(cachedDetails)
+      setIsLoading(false)
+      fetchVideos(id, cachedDetails.title, cachedDetails.videoSearchTerms)
+      return
+    }
+
+    // Try server-side cache via GET
+    setIsLoading(true)
+    getCachedRecipeDetails(id).then(details => {
+      if (details) {
+        setRecipe({ id, title: details.title || 'Recipe' })
+        setRecipeDetails(details)
+        saveToCache(cacheKey, details)
+        fetchVideos(id, details.title, details.videoSearchTerms)
+      } else {
+        navigate('/')
+      }
+    }).catch(() => navigate('/')).finally(() => setIsLoading(false))
   }, [id, location.state, navigate])
 
   const fetchVideos = async (recipeId, recipeTitle, videoSearchTerms = []) => {
@@ -174,7 +67,7 @@ function RecipeDetail() {
     const cachedVideos = getFromCache(videosCacheKey)
 
     if (cachedVideos) {
-      console.log('✨ Using cached recipe videos')
+      if (import.meta.env.DEV) console.log('✨ Using cached recipe videos')
       setVideos(cachedVideos)
       return
     }
@@ -183,7 +76,7 @@ function RecipeDetail() {
     const safeResult = Array.isArray(result) ? result : []
     setVideos(safeResult)
     saveToCache(videosCacheKey, safeResult)
-    if (safeResult.length > 0) {
+    if (import.meta.env.DEV && safeResult.length > 0) {
       console.log('💾 Saved recipe videos to cache')
     }
   }
@@ -194,7 +87,7 @@ function RecipeDetail() {
     const cachedDetails = getFromCache(cacheKey)
     
     if (cachedDetails) {
-      console.log('✨ Using cached recipe details')
+      if (import.meta.env.DEV) console.log('✨ Using cached recipe details')
       setRecipeDetails(cachedDetails)
       setIsLoading(false)
       // Fetch videos non-blocking (uses its own cache)
@@ -219,8 +112,19 @@ function RecipeDetail() {
       }
 
       let details;
+      const streamBuffer = { current: '' }
+      const onChunk = (chunk) => {
+        streamBuffer.current += chunk
+        try {
+          const descMatch = streamBuffer.current.match(/"description"\s*:\s*"((?:[^"\\]|\\.)*)(?:"|$)/)
+          if (descMatch) {
+            setRecipeDetails(prev => prev ? prev : { description: descMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n') })
+            setIsLoading(false)
+          }
+        } catch { /* partial JSON, keep accumulating */ }
+      }
       try {
-        details = await getRecipeDetailsStreaming(context);
+        details = await getRecipeDetailsStreaming(context, onChunk);
       } catch {
         details = await getRecipeDetails(context);
       }
@@ -228,7 +132,7 @@ function RecipeDetail() {
 
       // Save to cache
       saveToCache(cacheKey, details)
-      console.log('💾 Saved recipe details to cache')
+      if (import.meta.env.DEV) console.log('💾 Saved recipe details to cache')
 
       // Fetch videos non-blocking after details resolve
       fetchVideos(recipeData.id, recipeData.title, details.videoSearchTerms)
@@ -615,7 +519,7 @@ function RecipeDetail() {
               {videos === null && (
                 <Box w="100%" overflowX="hidden" pt="1" mt="-1">
                   <Flex gap="6">
-                    {mockVideos.map((v) => (
+                    {VIDEO_PLACEHOLDERS.map((v) => (
                       <ShortVideo key={v.id} thumbnail={null} />
                     ))}
                   </Flex>

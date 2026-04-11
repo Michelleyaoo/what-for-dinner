@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis';
+import { createHash } from 'crypto';
 
 const DEFAULT_TTL = 60 * 60 * 24; // 24 hours
 
@@ -16,10 +17,14 @@ function getRedis() {
   return redis;
 }
 
+function shortHash(str) {
+  return createHash('sha256').update(str).digest('hex').slice(0, 16);
+}
+
 export function buildSearchCacheKey(ingredients, maxPrepTime, servings, dietaryPreferences) {
   const sorted = [...ingredients].map(i => i.toLowerCase().trim()).sort().join(',');
   const diet = [...dietaryPreferences].sort().join(',');
-  return `search:${sorted}:${maxPrepTime}:${servings}:${diet}`;
+  return `search:${shortHash(`${sorted}:${maxPrepTime}:${servings}:${diet}`)}`;
 }
 
 export function buildDetailsCacheKey(recipeId) {

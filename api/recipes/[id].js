@@ -8,6 +8,10 @@ import {
   getFromServerCache,
   saveToServerCache
 } from '../utils/cache.js';
+import { validateEnv } from '../utils/env.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * API Endpoint: Get detailed recipe instructions
@@ -16,13 +20,26 @@ import {
  * Returns: { id, description, instructions, videoSearchTerms, cuisineType, difficulty }
  */
 export default async function handler(req, res) {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed. Use POST.' });
+  // GET: cache-only lookup for deep-linked URLs
+  if (req.method === 'GET') {
+    const recipeId = req.query.id;
+    if (!recipeId) return res.status(400).json({ error: 'Missing recipe ID' });
+    const cacheKey = buildDetailsCacheKey(recipeId);
+    const cached = await getFromServerCache(cacheKey);
+    if (cached) {
+      return res.status(200).json(typeof cached === 'string' ? JSON.parse(cached) : cached);
+    }
+    return res.status(404).json({ error: 'Recipe not found', message: 'This recipe is not in the cache. Try searching for it first.' });
   }
 
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed. Use GET or POST.' });
+  }
+
+  const envError = validateEnv(['OPENAI_API_KEY']);
+  if (envError) return res.status(500).json(envError);
+
   try {
-    // Extract recipe context from request
     const {
       recipeId,
       recipeTitle,
@@ -33,7 +50,6 @@ export default async function handler(req, res) {
       maxPrepTime
     } = req.body;
 
-    // Validate required fields
     if (!recipeId || !recipeTitle) {
       return res.status(400).json({ 
         error: 'Missing required fields',
@@ -48,7 +64,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Check server-side cache first
     const cacheKey = buildDetailsCacheKey(recipeId);
     const cached = await getFromServerCache(cacheKey);
     if (cached) {
@@ -56,22 +71,9 @@ export default async function handler(req, res) {
       return res.status(200).json(typeof cached === 'string' ? JSON.parse(cached) : cached);
     }
 
-    // Check for API key
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is not configured');
-      return res.status(500).json({ 
-        error: 'Server configuration error',
-        message: 'OpenAI API key is not configured.'
-      });
-    }
+    const rateLimited = await checkRateLimit(req, res);
+    if (rateLimited) return;
 
-    // Initialize OpenAI client
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    // Build prompts using imported functions
-    const systemPrompt = RECIPE_DETAILS_SYSTEM_PROMPT;
     const userPrompt = buildRecipeDetailsUserPrompt({
       recipeId,
       recipeTitle,
@@ -89,12 +91,13 @@ export default async function handler(req, res) {
     const openaiParams = {
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: RECIPE_DETAILS_SYSTEM_PROMPT },
         { role: 'user', content: userPrompt }
       ],
       response_format: { type: 'json_object' },
       max_completion_tokens: 2000,
     };
+    const requestOpts = { timeout: 25_000 };
 
     if (useStreaming) {
       res.writeHead(200, {
@@ -106,7 +109,7 @@ export default async function handler(req, res) {
       const stream = await openai.chat.completions.create({
         ...openaiParams,
         stream: true,
-      });
+      }, requestOpts);
 
       let fullContent = '';
       for await (const chunk of stream) {
@@ -123,7 +126,7 @@ export default async function handler(req, res) {
       return res.end();
     }
 
-    const completion = await openai.chat.completions.create(openaiParams);
+    const completion = await openai.chat.completions.create(openaiParams, requestOpts);
     const responseText = completion.choices[0].message.content;
     const recipeDetails = JSON.parse(responseText);
 

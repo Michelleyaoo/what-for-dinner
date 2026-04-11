@@ -1,4 +1,3 @@
-import { MemoryRouter } from 'react-router-dom'
 import RecipeCard from './RecipeCard'
 
 export default {
@@ -10,18 +9,12 @@ export default {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <MemoryRouter>
-        <div style={{ width: '400px' }}>
-          <Story />
-        </div>
-      </MemoryRouter>
+      <div style={{ width: '400px' }}>
+        <Story />
+      </div>
     ),
   ],
   argTypes: {
-    id: {
-      control: 'text',
-      description: 'Recipe ID for navigation',
-    },
     title: {
       control: 'text',
       description: 'Recipe title',
@@ -40,7 +33,6 @@ export default {
 
 export const Default = {
   args: {
-    id: '1',
     title: 'Tomato and egg stir fry',
     prepTime: '20 mins',
     ingredients: [
@@ -54,7 +46,6 @@ export const Default = {
 
 export const SomeUnavailableIngredients = {
   args: {
-    id: '2',
     title: 'Cozy beef stew',
     prepTime: '2 hours',
     ingredients: [
@@ -69,7 +60,6 @@ export const SomeUnavailableIngredients = {
 
 export const ManyIngredients = {
   args: {
-    id: '3',
     title: 'Thai red curry',
     prepTime: '45 mins',
     ingredients: [
@@ -86,7 +76,6 @@ export const ManyIngredients = {
 
 export const StringIngredients = {
   args: {
-    id: '4',
     title: 'Simple pasta',
     prepTime: '15 mins',
     ingredients: ['Pasta', 'Tomato sauce', 'Parmesan'],
@@ -103,7 +92,6 @@ export const StringIngredients = {
 
 export const QuickRecipe = {
   args: {
-    id: '5',
     title: 'Avocado toast',
     prepTime: '5 mins',
     ingredients: [
@@ -123,7 +111,6 @@ export const InGrid = {
       maxWidth: '1200px',
     }}>
       <RecipeCard
-        id="1"
         title="Tomato and egg stir fry"
         prepTime="20 mins"
         ingredients={[
@@ -133,7 +120,6 @@ export const InGrid = {
         image="1"
       />
       <RecipeCard
-        id="2"
         title="Cozy beef stew"
         prepTime="2 hours"
         ingredients={[
@@ -143,7 +129,6 @@ export const InGrid = {
         image="2"
       />
       <RecipeCard
-        id="3"
         title="Thai red curry"
         prepTime="45 mins"
         ingredients={[
