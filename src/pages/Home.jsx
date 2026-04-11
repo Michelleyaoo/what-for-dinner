@@ -4,6 +4,7 @@ import { Box, Heading, Flex, VStack, Text } from '@chakra-ui/react'
 import { keyframes } from '@emotion/react'
 import Chip from '../components/Chip'
 import IngredientSearch from '../components/IngredientSearch'
+import MobileSearchOverlay from '../components/MobileSearchOverlay'
 import Button from '../components/Button'
 import { removeEmojiFromIngredient, ingredientsToUrlParam } from '../utils/ingredients'
 import { POPULAR_INGREDIENTS } from '../data/ingredients'
@@ -39,6 +40,7 @@ function Home() {
   const navigate = useNavigate()
   const [selectedIngredients, setSelectedIngredients] = useState([])
   const [error, setError] = useState(null)
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
 
   const [phraseIdx, setPhraseIdx] = useState(0)
   const [displayed, setDisplayed] = useState('')
@@ -171,10 +173,49 @@ function Home() {
           </VStack>
 
           <VStack gap="4" w="100%" align="stretch">
-            <IngredientSearch
-              selectedIngredients={selectedIngredients}
-              onToggleIngredient={toggleIngredient}
-            />
+            {/* Desktop: inline search with dropdown */}
+            <Box display={{ base: 'none', md: 'block' }}>
+              <IngredientSearch
+                selectedIngredients={selectedIngredients}
+                onToggleIngredient={toggleIngredient}
+              />
+            </Box>
+
+            {/* Mobile: tappable trigger that opens full-screen overlay */}
+            <Box
+              display={{ base: 'flex', md: 'none' }}
+              bg="white"
+              border="1px solid"
+              borderColor="neutral.border"
+              borderRadius="lg"
+              px="4"
+              py="3"
+              minH="52px"
+              alignItems="center"
+              flexWrap="wrap"
+              gap="2"
+              cursor="text"
+              onClick={() => setIsMobileSearchOpen(true)}
+              _hover={{ borderColor: 'primary.100' }}
+              transition="border-color 0.2s ease"
+            >
+              {selectedIngredients.length === 0 ? (
+                <Text textStyle="subheadMedium" color="grey.400">
+                  what I have in the fridge...
+                </Text>
+              ) : (
+                selectedIngredients.map((ing) => (
+                  <Box key={ing} onClick={(e) => e.stopPropagation()}>
+                    <Chip
+                      text={ing}
+                      isSelected={true}
+                      onClick={() => toggleIngredient(ing)}
+                      size="Small"
+                    />
+                  </Box>
+                ))
+              )}
+            </Box>
 
             {/* Quick-pick popular ingredients */}
             <Flex
@@ -244,6 +285,14 @@ function Home() {
           Let's cook!
         </Button>
       </VStack>
+      {/* Mobile search overlay */}
+      {isMobileSearchOpen && (
+        <MobileSearchOverlay
+          selectedIngredients={selectedIngredients}
+          onToggleIngredient={toggleIngredient}
+          onClose={() => setIsMobileSearchOpen(false)}
+        />
+      )}
     </Box>
   )
 }

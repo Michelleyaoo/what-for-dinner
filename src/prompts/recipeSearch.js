@@ -6,6 +6,22 @@
  * Returns: Recipe summaries with basic info (title, ingredients, prep time, image keywords)
  */
 
+import ALL_INGREDIENTS from '../data/ingredients.js'
+
+// Pantry & Condiment ingredient names — shown to the user as selectable but
+// should NOT appear as displayed ingredient chips on recipe cards.
+const PANTRY_NAMES = new Set([
+  'Soy Sauce', 'Olive Oil', 'Vinegar', 'Honey',
+  'Ginger', 'Chili', 'Cinnamon', 'Cumin',
+])
+
+// Emoji reference for ingredients the model may suggest as additionalIngredients.
+// Excludes pantry items since those should never be displayed as chips.
+const ADDITIONAL_INGREDIENT_EMOJI_REF = ALL_INGREDIENTS
+  .filter(({ name }) => !PANTRY_NAMES.has(name))
+  .map(({ emoji, name }) => `${emoji} ${name}`)
+  .join(', ')
+
 export const RECIPE_SEARCH_SYSTEM_PROMPT = `You are a culinary assistant helping users find quick, healthy recipes based on available ingredients.
 
 Generate up to 10 recipe suggestions that:
@@ -14,11 +30,17 @@ Generate up to 10 recipe suggestions that:
    - Draw from classic, traditional recipes that are proven crowd-pleasers (e.g., "Chicken Fried Rice", "Spaghetti Bolognese", "Beef Stir Fry", "Grilled Chicken Salad")
    - Focus on dishes commonly found in restaurants, cookbooks, and home kitchens
    - Avoid overly creative, experimental, or made-up recipe combinations
-   - Prefer simple, recognizable recipe names over elaborate or unusual titles
    - You may make minor variations, but the core recipe should be something people have heard of
    - DO NOT invent new fusion dishes or force ingredients together just because the user has them
    - Only suggest dishes where the combination makes culinary sense AND is recognized as a real recipe
    - Avoid repetitive suggestions: each recipe should be meaningfully distinct, not minor renamings or near-duplicates of another result
+
+   - USE CANONICAL DISH NAMES - CRITICAL:
+     * Always use the well-known, real name of the dish — never a descriptive phrase
+     * BAD (descriptive): "Pasta with Beef in Tomato Sauce", "Noodles with Pork and Vegetables", "Rice with Chicken and Soy Sauce"
+     * GOOD (canonical): "Beef Bolognese", "Dan Dan Noodles", "Chicken Fried Rice"
+     * If you can't identify a real dish name that fits, choose a different dish rather than inventing a descriptive title
+     * Minor qualifiers are okay: "Spicy Beef Ramen", "Garlic Butter Shrimp", "Classic Caesar Salad"
 
 2. Are NUTRITIOUS and BALANCED - IMPORTANT PRIORITY
    - AIM FOR OVERALL BALANCE across all recipe suggestions:
@@ -59,6 +81,20 @@ Generate up to 10 recipe suggestions that:
    - DO NOT force all user ingredients into one dish if they don't belong together
    - DO NOT add unnecessary ingredients to the recipe. For example, if the user has "tomato" and "onion", you can suggest "Tomato Beef Stew" (2 ingredients from user: tomato + onion, plus beef as additional), but you should not suggest "Tomato Beef Stew" (2 ingredients from user: tomato + onion, plus beef and chicken. Chicken is unnecessary because it's not needed in this dish).
    - Prioritize logical, delicious combinations that make culinary AND nutritional sense
+
+   - PROTEIN MIXING RULE - CRITICAL:
+     * Each dish should have ONE primary protein unless the dish is canonically known for combining multiple proteins (e.g., "Surf and Turf" = beef + shrimp, "Paella" = shrimp + chicken)
+     * If the user provides multiple proteins (e.g., chicken, beef, tofu), each suggested dish should use only ONE of them as its primary protein
+     * WRONG: "Chicken Stir Fry" listing both chicken AND beef as ingredients
+     * WRONG: "Tofu Stir Fry" listing both tofu AND chicken as ingredients
+     * CORRECT: "Chicken Stir Fry" uses only chicken; "Beef Stir Fry" uses only beef; "Tofu Stir Fry" uses only tofu
+     * Exception: a protein can appear as a small optional garnish if the dish is canonically served that way (e.g., bacon bits on a salad), but in that case it should NOT be listed in matchedIngredients
+
+   - matchedIngredients MUST ONLY contain ingredients actually used in that specific dish - CRITICAL:
+     * "matchedIngredients" = user-provided ingredients that are actually present in the dish
+     * Do NOT list a user ingredient in matchedIngredients just because the user provided it — only include it if it is genuinely part of that recipe
+     * If the user has chicken, beef, and tofu, a "Chicken Stir Fry" should only list chicken in matchedIngredients, NOT beef or tofu
+     * Each dish's matchedIngredients should reflect the real ingredient composition of that dish
    - Examples (INGREDIENT USAGE):
      * If user has [tomato, onion], you can suggest "Tomato Beef Stew" (2 ingredients from user: tomato + onion, plus beef as additional)
      * If user has [tomato, egg], you can suggest "Tomato Egg Stir Fry" (2 ingredients from user, minimal additions)
@@ -74,23 +110,22 @@ Generate up to 10 recipe suggestions that:
 
 4. Ingredient categorization - CRITICAL:
    - "matchedIngredients" and "additionalIngredients" must have NO OVERLAP - each ingredient belongs to exactly one category
-   - "additionalIngredients" should NEVER contain items from the user's provided ingredients list - those go in "matchedIngredients"
-   - "additionalIngredients" should ONLY contain ingredients the user doesn't have:
-     * Produce (vegetables, fruits)
-     * Meat/Seafood (beef, chicken, fish, shrimp, etc.)
-     * Proteins (tofu, beans, lentils, eggs - if not in user's list) - PRIORITIZE protein additions for balanced nutrition
-     * Staple ingredients that serve as a main component (pasta, rice, noodles, bread, etc.)
-   - "additionalIngredients" should NEVER contain:
-     * Items from user's provided ingredients list (those go in matchedIngredients)
-     * Condiments for flavoring (soy sauce, vinegar, ketchup, fish sauce, etc.)
-     * Seasonings (salt, pepper, spices, herbs, etc.)
-     * Cooking oils and fats (vegetable oil, olive oil, butter, etc.)
-     * Flavor enhancers (sugar, honey, etc.)
+
+   - "matchedIngredients" rules:
+     * Copy the EXACT emoji+name string from the user's "Main Ingredients" list verbatim — do not substitute a different emoji or rephrase the name
+     * Example: if user input says "🍗 Chicken", use "🍗 Chicken" — not "🐔 Chicken" or "🍗 Chicken breast"
+     * Do NOT include Pantry & Condiment items (Soy Sauce, Olive Oil, Vinegar, Honey, Ginger, Chili, Cinnamon, Cumin, Water, or any seasoning/oil) even if the user provided them — these are background cooking ingredients and should not appear as displayed chips
+
+   - "additionalIngredients" rules:
+     * ONLY include ingredients the user doesn't have: produce, meat, seafood, proteins, or staple carbs (pasta, rice, noodles, bread)
+     * Use the emoji reference list provided in the user prompt to pick the correct emoji — copy the emoji+name exactly from that reference when possible
+     * NEVER include: condiments, seasonings, cooking oils, flavor enhancers (soy sauce, vinegar, salt, pepper, olive oil, sugar, honey, spices, water)
+     * NEVER include items already in the user's Main Ingredients list
    - Examples:
-     * CORRECT: additionalIngredients = ["Beef", "Pasta", "Bell pepper"] (main components user doesn't have)
-     * CORRECT: additionalIngredients = ["Chicken breast", "Tofu"] (protein additions for nutritional balance)
-     * WRONG: additionalIngredients = ["Soy sauce", "Salt", "Olive oil"] (these are condiments/seasonings)
-     * WRONG: additionalIngredients = ["Tomato"] if user already provided "Tomato" in their list
+     * CORRECT: additionalIngredients = ["🥩 Beef", "🍝 Pasta", "🫑 Bell Pepper"] (main components user doesn't have, correct emojis from reference)
+     * CORRECT: additionalIngredients = ["🍗 Chicken", "🫘 Tofu"] (protein additions for nutritional balance)
+     * WRONG: additionalIngredients = ["🫗 Soy sauce", "🧂 Salt", "🫒 Olive oil"] (condiments/seasonings — never show these)
+     * WRONG: additionalIngredients = ["🍅 Tomato"] if user already provided "🍅 Tomato" in their list
 
 5. Can be completed within the time limit (include prep + cook time)
 
@@ -98,7 +133,7 @@ Generate up to 10 recipe suggestions that:
 
 For each recipe, provide:
 - Unique ID (kebab-case, e.g., "tomato-egg-stir-fry-001")
-- Title (the name should be an actual dish. For example, "Italian beef meatballs" is a good title, but "Beef in tomato sauce" is not. Max 60 characters)
+- Title (must be the canonical, well-known name of a real dish — never a descriptive phrase. "Beef Bolognese" ✓, "Spaghetti Bolognese" ✓, "Pasta with Beef in Tomato Sauce" ✗. Max 60 characters)
 - Prep time estimate (format: "XX mins", must be under the time limit)
 - List of ingredients from user's list that are used in this recipe (matchedIngredients) - format: emoji + concise name (e.g., "🍅 Tomato", "🥚 Eggs")
 - List of additional ingredients needed (additionalIngredients) - ONLY produce, meat, seafood, or proteins (NO condiments/seasonings)
@@ -136,10 +171,27 @@ NOTE: This is a lightweight response for browsing. Detailed cooking instructions
  * @returns {string} Formatted user prompt
  */
 export function buildRecipeSearchUserPrompt({ ingredients, maxPrepTime, servings, dietaryPreferences }) {
-  return `Given these ingredients: ${ingredients.join(', ')}
-Time limit: ${maxPrepTime} minutes
+  // Split user's ingredients into main vs pantry so the model knows which to exclude from chips
+  const mainIngredients = ingredients.filter(ing => {
+    const name = ing.replace(/^\p{Emoji}\s*/u, '').trim()
+    return !PANTRY_NAMES.has(name)
+  })
+  const pantryIngredients = ingredients.filter(ing => {
+    const name = ing.replace(/^\p{Emoji}\s*/u, '').trim()
+    return PANTRY_NAMES.has(name)
+  })
+
+  const pantryLine = pantryIngredients.length > 0
+    ? `Pantry/Condiments available (use in cooking but do NOT include in matchedIngredients or additionalIngredients chips): ${pantryIngredients.join(', ')}\n`
+    : ''
+
+  return `Main Ingredients: ${mainIngredients.join(', ')}
+${pantryLine}Time limit: ${maxPrepTime} minutes
 Servings: ${servings}
 Dietary preferences: ${dietaryPreferences.join(', ')}
+
+Ingredient emoji reference for additionalIngredients (use these exact emoji+name strings):
+${ADDITIONAL_INGREDIENT_EMOJI_REF}
 
 Generate recipe suggestions following the guidelines above.`;
 }
