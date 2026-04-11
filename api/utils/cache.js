@@ -27,9 +27,9 @@ export function buildDetailsCacheKey(recipeId) {
 }
 
 export async function getFromServerCache(key) {
-  const client = getRedis();
-  if (!client) return null;
   try {
+    const client = getRedis();
+    if (!client) return null;
     return await client.get(key);
   } catch (error) {
     console.warn('Redis cache read failed:', error.message);
@@ -38,9 +38,9 @@ export async function getFromServerCache(key) {
 }
 
 export async function saveToServerCache(key, data, ttl = DEFAULT_TTL) {
-  const client = getRedis();
-  if (!client) return;
   try {
+    const client = getRedis();
+    if (!client) return;
     await client.set(key, JSON.stringify(data), { ex: ttl });
   } catch (error) {
     console.warn('Redis cache write failed:', error.message);
