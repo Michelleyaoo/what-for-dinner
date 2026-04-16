@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Box } from '@chakra-ui/react'
+import { Box, Skeleton } from '@chakra-ui/react'
 
 function ImagePlaceholder({ h, props }) {
   return (
@@ -30,10 +30,10 @@ function ImagePlaceholder({ h, props }) {
   )
 }
 
-function Image({ image = "1", src, alt = "", ...props }) {
+function Image({ src, alt = "", ...props }) {
   const [imgError, setImgError] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
 
-  // If src is provided (and hasn't errored), render the real photo
   if (src && !imgError) {
     return (
       <Box
@@ -43,6 +43,14 @@ function Image({ image = "1", src, alt = "", ...props }) {
         overflow="hidden"
         {...props}
       >
+        {!imgLoaded && (
+          <Skeleton
+            position="absolute"
+            inset="0"
+            w="100%"
+            h="100%"
+          />
+        )}
         <Box
           as="img"
           src={src}
@@ -54,13 +62,16 @@ function Image({ image = "1", src, alt = "", ...props }) {
           objectFit="cover"
           objectPosition="center"
           pointerEvents="none"
+          opacity={imgLoaded ? 1 : 0}
+          transition="opacity 0.3s ease"
+          onLoad={() => setImgLoaded(true)}
           onError={() => setImgError(true)}
         />
       </Box>
     )
   }
 
-  // Fallback: gradient placeholder
+  // Fallback: gradient placeholder (permanent — no src or image failed)
   return <ImagePlaceholder h={props.h} props={props} />
 }
 

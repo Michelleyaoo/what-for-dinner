@@ -14,11 +14,7 @@ function Button({
     ? iconElement || <ArrowLeft size={20} weight="regular" />
     : null
 
-  // Tertiary buttons need custom styling
-  const customStyles = variant === 'tertiary' ? {
-    gap: icon ? "8px" : "0",
-    textStyle: "headlineSemibold",
-  } : {
+  const customStyles = {
     gap: icon ? "8px" : "0",
     textStyle: "headlineSemibold",
   }

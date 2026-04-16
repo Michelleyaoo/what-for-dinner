@@ -145,8 +145,6 @@ function RecipeDetail() {
   }
 
   const handleBack = () => {
-    // Get ingredients from search context to navigate back to results
-    const recipeFromState = location.state?.recipe
     const searchContext = location.state?.searchContext
     
     if (searchContext?.ingredients) {
@@ -263,7 +261,6 @@ function RecipeDetail() {
           mt={{ base: '4', md: '0' }}
         >
           <VStack
-            spacing="10"
             align="stretch"
             gap="10"
             p={{ base: '6', md: '10' }}

@@ -1,4 +1,4 @@
-import { Box, Flex } from '@chakra-ui/react'
+import { Box, Flex, Skeleton } from '@chakra-ui/react'
 import { Play } from 'phosphor-react'
 
 function ShortVideo({ 
@@ -38,10 +38,12 @@ function ShortVideo({
           pointerEvents="none"
         />
       ) : (
-        <Box
+        <Skeleton
           position="absolute"
           inset="0"
-          bg="grey.100"
+          w="100%"
+          h="100%"
+          borderRadius="0"
         />
       )}
 

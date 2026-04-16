@@ -4,7 +4,6 @@ import { Box, Flex, VStack, Container, Heading, Text } from '@chakra-ui/react'
 import Button from '../components/Button'
 import IngredientSearch from '../components/IngredientSearch'
 import RecipeCard from '../components/RecipeCard'
-import RecipeCardSkeleton from '../components/RecipeCardSkeleton'
 import RecipeSearchLoading from '../components/RecipeSearchLoading'
 import { searchRecipes, getRecipeDetails, getRecipeImages, getErrorMessage } from '../utils/api'
 import { ingredientsFromUrlParam, ingredientsToUrlParam, removeEmojiFromIngredient, formatIngredientsForDisplay } from '../utils/ingredients'
@@ -215,30 +214,24 @@ function ResultList() {
             />
           </Box>
 
-          {/* Update results button — visible when ingredients have changed */}
+          {/* Update results button — always reserves space, visibility toggled */}
           <Box
-            w={{ base: 'auto', md: '30' }}
             display="flex"
             alignItems="center"
             justifyContent={{ base: 'stretch', md: 'flex-start' }}
+            flexShrink={0}
           >
-            {ingredientsChanged && selectedIngredients.length > 0 ? (
-              <Button
-                variant="primary"
-                icon={false}
-                onClick={handleUpdateSearch}
-                w={{ base: '100%', md: 'auto' }}
-                whiteSpace="nowrap"
-              >
-                Update results
-              </Button>
-            ) : (
-              <Box
-                w="30"
-                visibility="hidden"
-                display={{ base: 'none', md: 'block' }}
-              />
-            )}
+            <Button
+              variant="primary"
+              icon={false}
+              onClick={handleUpdateSearch}
+              w={{ base: '100%', md: 'auto' }}
+              whiteSpace="nowrap"
+              visibility={ingredientsChanged && selectedIngredients.length > 0 ? 'visible' : 'hidden'}
+              pointerEvents={ingredientsChanged && selectedIngredients.length > 0 ? 'auto' : 'none'}
+            >
+              Update results
+            </Button>
           </Box>
         </Flex>
       </Container>
