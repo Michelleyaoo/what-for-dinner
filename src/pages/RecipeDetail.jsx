@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Box, Flex, VStack, HStack, Container, Text, DialogRoot, DialogBackdrop, DialogPositioner, DialogContent, DialogCloseTrigger } from '@chakra-ui/react'
 import { Clock, ArrowLeft, ArrowRight } from 'phosphor-react'
@@ -26,6 +26,9 @@ function RecipeDetail() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
   const [videos, setVideos] = useState(null) // null = loading, [] = none found, [...] = loaded
   const [selectedVideo, setSelectedVideo] = useState(null)
+  const touchStartX = useRef(null)
+
+  const SWIPE_THRESHOLD = 50
 
   useEffect(() => {
     const recipeFromState = location.state?.recipe
@@ -164,6 +167,18 @@ function RecipeDetail() {
     setCurrentVideoIndex((prev) => 
       Math.min(videos.length - 1, prev + 1)
     )
+  }
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (diff > SWIPE_THRESHOLD) handleNextVideo()
+    else if (diff < -SWIPE_THRESHOLD) handlePrevVideo()
+    touchStartX.current = null
   }
 
   const toggleInstructions = () => {
@@ -544,6 +559,8 @@ function RecipeDetail() {
                     overflowY="visible"
                     pt="1"
                     mt="-1"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
                   >
                     <Flex
                       gap="6"
