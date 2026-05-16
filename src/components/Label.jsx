@@ -25,7 +25,7 @@ function Label({
       py='1.5'
       borderRadius='1'
       fontFamily="'Work Sans', sans-serif"
-      textStyle="tinyLabelMedium"
+      textStyle="tinyLabelSemibold"
       {...styles}
     >
       {text}

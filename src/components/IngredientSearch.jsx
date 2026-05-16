@@ -100,8 +100,9 @@ function IngredientSearch({ selectedIngredients, onToggleIngredient }) {
       <Box
         bg="white"
         border="1px solid"
-        borderColor={isOpen && query ? 'primary.500' : 'neutral.border'}
+        borderColor="primary.600"
         borderRadius="lg"
+        boxShadow="shadow-md"
         px="4"
         py="3"
         minH="68px"
@@ -110,11 +111,7 @@ function IngredientSearch({ selectedIngredients, onToggleIngredient }) {
         flexWrap="wrap"
         gap="3"
         cursor="text"
-        transition="border-color 0.2s ease"
         onClick={handleContainerClick}
-        _hover={{
-          borderColor: isOpen && query ? 'primary.500' : 'primary.100',
-        }}
       >
         {selectedIngredients.map((ingredient) => (
           <Chip

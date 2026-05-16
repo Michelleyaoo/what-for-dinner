@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Box, Flex, Text } from '@chakra-ui/react'
-import { ArrowLeft } from 'phosphor-react'
+import Button from './Button'
 import Chip from './Chip'
 import ALL_INGREDIENTS, { POPULAR_INGREDIENTS } from '../data/ingredients'
 
@@ -55,20 +55,9 @@ function MobileSearchOverlay({ selectedIngredients, onToggleIngredient, onClose 
     >
       {/* Header */}
       <Box px="4" pt="5" pb="4">
-        <Box
-          as="button"
-          display="inline-flex"
-          alignItems="center"
-          gap="2"
-          bg="transparent"
-          border="none"
-          cursor="pointer"
-          p="0"
-          onClick={onClose}
-        >
-          <ArrowLeft size={18} weight="bold" color="var(--chakra-colors-primary-500)" />
-          <Text textStyle="headlineSemibold" color="primary.500">Back</Text>
-        </Box>
+        <Button variant="tertiary" onClick={onClose} alignSelf="flex-start">
+          Back
+        </Button>
       </Box>
 
       {/* Search input */}
@@ -76,8 +65,9 @@ function MobileSearchOverlay({ selectedIngredients, onToggleIngredient, onClose 
         <Box
           bg="white"
           border="1px solid"
-          borderColor="primary.200"
+          borderColor="primary.600"
           borderRadius="lg"
+          boxShadow="shadow-md"
           px="4"
           py="3"
           display="flex"

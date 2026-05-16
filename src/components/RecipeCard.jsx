@@ -21,8 +21,8 @@ function RecipeCard({
   return (
     <Box
       bg="white"
-      border="1px solid"
-      borderColor="grey.100"
+      border="1.5px solid"
+      borderColor="primary.600"
       borderRadius="sm"
       overflow="hidden"
       w="100%"
@@ -30,11 +30,8 @@ function RecipeCard({
       display="flex"
       flexDirection="column"
       cursor="pointer"
+      boxShadow="card-peach"
       transition="all 0.2s ease"
-      _hover={{
-        transform: 'translateY(-4px)',
-        boxShadow: 'card',
-      }}
       onClick={onClick}
     >
       {/* Recipe Image */}
@@ -44,7 +41,7 @@ function RecipeCard({
       <VStack
         spacing="2"
         align="stretch"
-        px="8"
+        px="4"
         py="10"
         flex="1"
       >

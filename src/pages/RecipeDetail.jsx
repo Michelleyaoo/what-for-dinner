@@ -193,7 +193,7 @@ function RecipeDetail() {
   // Error state
   if (error) {
     return (
-      <Box minH="100vh" w="100%" bg="neutral.background">
+      <Box minH="100vh" w="100%" bg="neutral.background" backgroundImage="url('/bg.svg')" backgroundRepeat="repeat" backgroundSize="16px 16px">
         <Container maxW="1440px" px={{ base: '4', md: '10' }} pt={{ base: '4', md: '12' }}>
           <Button variant="tertiary" icon={true} onClick={handleBack}>
             Back
@@ -234,6 +234,9 @@ function RecipeDetail() {
       minH="100vh"
       w="100%"
       bg="neutral.background"
+      backgroundImage="url('/bg.svg')"
+      backgroundRepeat="repeat"
+      backgroundSize="16px 16px"
       position="relative"
     >
       {/* Back Button - Fixed position */}
@@ -266,13 +269,16 @@ function RecipeDetail() {
         maxW="800px"
         px={{ base: '4', md: '10' }}
         pt={{ base: '0', md: '0' }}
-        pb="10"
+        pb="0"
       >
         <Box
           bg="white"
+          borderTop="2px solid"
+          borderLeft="2px solid"
+          borderRight="2px solid"
+          borderColor="primary.600"
           borderTopRadius="xl"
-          overflowX="hidden"
-          overflowY="visible"
+          boxShadow="card-orange"
           mt={{ base: '4', md: '0' }}
         >
           <VStack
@@ -294,7 +300,6 @@ function RecipeDetail() {
             <VStack
               spacing="2"
               align="stretch"
-              px="4"
               pb="10"
               borderBottom="1px solid"
               borderColor="grey.100"
@@ -476,7 +481,7 @@ function RecipeDetail() {
                 {/* View All Button */}
                 <Box alignSelf="flex-start">
                   <Button
-                    variant="tertiary"
+                    variant="text"
                     icon={false}
                     onClick={toggleInstructions}
                   >
@@ -486,154 +491,173 @@ function RecipeDetail() {
               </VStack>
             </VStack>
 
-            {/* Video Carousel Section */}
-            <VStack
-              spacing="6"
-              align="stretch"
-              overflow="visible"
+          </VStack>
+
+          {/* Video Carousel Section — lives outside the padded VStack so carousel is truly full-width */}
+          <VStack
+            gap="6"
+            align="stretch"
+            overflow="visible"
+            pb={{ base: '6', md: '10' }}
+          >
+            {/* Section Header */}
+            <Flex
+              justify="space-between"
+              align="center"
+              px={{ base: '6', md: '10' }}
             >
-              {/* Section Header */}
-              <Flex
-                justify="space-between"
-                align="center"
+              <Box
+                textStyle="title2"
+                color="neutral.ink"
               >
-                <Box
-                  textStyle="title2"
-                  color="neutral.ink"
-                >
-                  🍳 See how others make it
-                </Box>
+                🍳 See how others make it
+              </Box>
 
-                {/* Navigation Arrows — only shown when real videos are loaded */}
-                {videos !== null && videos.length > 0 && (
-                  <HStack spacing="4">
-                    <Button
-                      variant="tertiary"
-                      icon={true}
-                      iconElement={<ArrowLeft size={20} weight="regular" />}
-                      onClick={handlePrevVideo}
-                      disabled={currentVideoIndex === 0}
-                    >
-                    </Button>
-                    <Button
-                      variant="tertiary"
-                      icon={true}
-                      iconElement={<ArrowRight size={20} weight="regular" />}
-                      onClick={handleNextVideo}
-                      disabled={currentVideoIndex >= videos.length - 1}
-                    >
-                    </Button>
-                  </HStack>
-                )}
-              </Flex>
-
-              {/* Loading state — non-clickable placeholder cards */}
-              {videos === null && (
-                <Box w="100%" overflowX="hidden" pt="1" mt="-1">
-                  <Flex gap="6">
-                    {VIDEO_PLACEHOLDERS.map((v) => (
-                      <ShortVideo key={v.id} thumbnail={null} />
-                    ))}
-                  </Flex>
-                </Box>
-              )}
-
-              {/* Empty state */}
-              {videos !== null && videos.length === 0 && (
-                <Box
-                  py="10"
-                  textAlign="center"
-                >
-                  <Box textStyle="bodyRegular" color="grey.500">
-                    Seems like no one cooked this yet 🥲
-                  </Box>
-                </Box>
-              )}
-
-              {/* Real videos carousel */}
+              {/* Navigation Arrows — only shown when real videos are loaded */}
               {videos !== null && videos.length > 0 && (
-                <>
-                  <Box
-                    w="100%"
-                    overflowX="hidden"
-                    overflowY="visible"
-                    pt="1"
-                    mt="-1"
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
+                <HStack spacing="4">
+                  <Button
+                    variant="tertiary"
+                    icon={true}
+                    iconElement={<ArrowLeft size={20} weight="regular" />}
+                    onClick={handlePrevVideo}
+                    disabled={currentVideoIndex === 0}
                   >
-                    <Flex
-                      gap="6"
-                      transition="transform 0.3s ease"
-                      transform={`translateX(-${currentVideoIndex * (240 + 24)}px)`}
-                    >
-                      {videos.map((video) => (
+                  </Button>
+                  <Button
+                    variant="tertiary"
+                    icon={true}
+                    iconElement={<ArrowRight size={20} weight="regular" />}
+                    onClick={handleNextVideo}
+                    disabled={currentVideoIndex >= videos.length - 1}
+                  >
+                  </Button>
+                </HStack>
+              )}
+            </Flex>
+
+            {/* Loading state — non-clickable placeholder cards */}
+            {videos === null && (
+              <Box
+                w="100%"
+                overflowX="hidden"
+                pt="1"
+                mt="-1"
+                css={{ scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}
+              >
+                <Flex gap="6" px={{ base: '6', md: '10' }}>
+                  {VIDEO_PLACEHOLDERS.map((v) => (
+                    <ShortVideo key={v.id} thumbnail={null} />
+                  ))}
+                </Flex>
+              </Box>
+            )}
+
+            {/* Empty state */}
+            {videos !== null && videos.length === 0 && (
+              <Box
+                px={{ base: '6', md: '10' }}
+                py="10"
+                textAlign="center"
+              >
+                <Box textStyle="bodyRegular" color="grey.500">
+                  Seems like no one cooked this yet 🥲
+                </Box>
+              </Box>
+            )}
+
+            {/* Real videos carousel */}
+            {videos !== null && videos.length > 0 && (
+              <>
+                <Box
+                  w="100%"
+                  overflowX="hidden"
+                  overflowY="visible"
+                  pt="1"
+                  mt="-1"
+                  css={{ scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <Flex
+                    gap="6"
+                    px={{ base: '6', md: '10' }}
+                    transition="transform 0.3s ease"
+                    transform={`translateX(-${currentVideoIndex * (240 + 24)}px)`}
+                  >
+                    {videos.map((video, index) => (
+                      <Box
+                        key={video.id}
+                        transform={index % 2 === 0 ? 'rotate(-1deg)' : 'rotate(1deg)'}
+                        transition="transform 0.2s ease"
+                        _hover={{ transform: 'rotate(0deg)' }}
+                        flexShrink={0}
+                      >
                         <ShortVideo
-                          key={video.id}
                           thumbnail={video.thumbnail}
                           alt={`${fullRecipe.title} video ${video.id}`}
                           onPlay={() => setSelectedVideo(video)}
                         />
-                      ))}
-                    </Flex>
-                  </Box>
-
-                  {/* Carousel Dots */}
-                  <Flex justify="center" gap="2">
-                    {videos.map((video, index) => (
-                      <Box
-                        key={video.id}
-                        w="2"
-                        h="2"
-                        borderRadius="full"
-                        bg={index === currentVideoIndex ? 'neutral.ink' : 'grey.300'}
-                        cursor="pointer"
-                        onClick={() => setCurrentVideoIndex(index)}
-                        transition="background 0.2s ease"
-                      />
+                      </Box>
                     ))}
                   </Flex>
-                </>
-              )}
-            </VStack>
+                </Box>
 
-            {/* YouTube Video Modal */}
-            <DialogRoot
-              open={!!selectedVideo}
-              onOpenChange={({ open }) => { if (!open) setSelectedVideo(null) }}
-            >
-              <DialogBackdrop />
-              <DialogPositioner>
-                <DialogContent
-                  w="360px"
-                  h="640px"
-                  borderRadius="16px"
-                  overflow="hidden"
-                  position="relative"
-                  bg="black"
-                >
-                  <DialogCloseTrigger
-                    position="absolute"
-                    top="3"
-                    right="3"
-                    zIndex="1"
-                    color="white"
-                  />
-                  {selectedVideo && (
+                {/* Carousel Dots */}
+                <Flex justify="center" gap="2" px={{ base: '6', md: '10' }}>
+                  {videos.map((video, index) => (
                     <Box
-                      as="iframe"
-                      src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1`}
-                      w="100%"
-                      h="100%"
-                      border="none"
-                      allow="autoplay; encrypted-media; fullscreen"
-                      allowFullScreen
+                      key={video.id}
+                      w="2"
+                      h="2"
+                      borderRadius="full"
+                      bg={index === currentVideoIndex ? 'neutral.ink' : 'grey.300'}
+                      cursor="pointer"
+                      onClick={() => setCurrentVideoIndex(index)}
+                      transition="background 0.2s ease"
                     />
-                  )}
-                </DialogContent>
-              </DialogPositioner>
-            </DialogRoot>
+                  ))}
+                </Flex>
+              </>
+            )}
           </VStack>
+
+          {/* YouTube Video Modal */}
+          <DialogRoot
+            open={!!selectedVideo}
+            onOpenChange={({ open }) => { if (!open) setSelectedVideo(null) }}
+          >
+            <DialogBackdrop />
+            <DialogPositioner>
+              <DialogContent
+                w="360px"
+                h="640px"
+                borderRadius="16px"
+                overflow="hidden"
+                position="relative"
+                bg="black"
+              >
+                <DialogCloseTrigger
+                  position="absolute"
+                  top="3"
+                  right="3"
+                  zIndex="1"
+                  color="white"
+                />
+                {selectedVideo && (
+                  <Box
+                    as="iframe"
+                    src={`https://www.youtube.com/embed/${selectedVideo.id}?autoplay=1`}
+                    w="100%"
+                    h="100%"
+                    border="none"
+                    allow="autoplay; encrypted-media; fullscreen"
+                    allowFullScreen
+                  />
+                )}
+              </DialogContent>
+            </DialogPositioner>
+          </DialogRoot>
         </Box>
       </Container>
     </Box>

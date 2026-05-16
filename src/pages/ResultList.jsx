@@ -179,6 +179,9 @@ function ResultList() {
       minH="100vh"
       w="100%"
       bg="neutral.background"
+      backgroundImage="url('/bg.svg')"
+      backgroundRepeat="repeat"
+      backgroundSize="16px 16px"
     >
       {/* Header */}
       <Container
@@ -245,6 +248,7 @@ function ResultList() {
       >
         <VStack
           spacing={{ base: '5', md: '10' }}
+          gap="6"
           align="stretch"
         >
           {/* Loading State */}
@@ -291,9 +295,9 @@ function ResultList() {
                   md: 'repeat(3, 1fr)',        // md-xl (768px-1280px): 3 cards
                   xl: 'repeat(4, 1fr)',        // > xl (> 1280px): 4 cards max
                 }}
-                gap={{ base: '4', md: '8' }}
+                gap={{ base: '10', md: '8' }}
               >
-                {recipes.map((recipe) => {
+                {recipes.map((recipe, index) => {
                   const ingredientsWithStates = [
                     ...(recipe.matchedIngredients || []).map(ing => ({
                       text: ing,
@@ -306,15 +310,21 @@ function ResultList() {
                   ]
 
                   return (
-                    <RecipeCard
+                    <Box
                       key={recipe.id}
-                      title={recipe.title}
-                      prepTime={recipe.prepTime}
-                      ingredients={ingredientsWithStates}
-                      image={recipe.image || '1'}
-                      imageUrl={recipeImages[recipe.id] || recipe.imageUrl}
-                      onClick={() => handleRecipeClick(recipe)}
-                    />
+                      transform={index % 2 === 0 ? 'rotate(-1deg)' : 'rotate(1deg)'}
+                      transition="transform 0.2s ease"
+                      _hover={{ transform: 'rotate(0deg)' }}
+                    >
+                      <RecipeCard
+                        title={recipe.title}
+                        prepTime={recipe.prepTime}
+                        ingredients={ingredientsWithStates}
+                        image={recipe.image || '1'}
+                        imageUrl={recipeImages[recipe.id] || recipe.imageUrl}
+                        onClick={() => handleRecipeClick(recipe)}
+                      />
+                    </Box>
                   )
                 })}
               </Box>
