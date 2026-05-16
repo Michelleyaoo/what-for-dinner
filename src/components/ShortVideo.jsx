@@ -16,11 +16,9 @@ function ShortVideo({
       borderRadius="16px"
       overflow="hidden"
       cursor="pointer"
-      transition="all 0.2s ease"
-      _hover={{
-        transform: 'translateY(-4px)',
-        boxShadow: 'card',
-      }}
+      border="1.5px solid"
+      borderColor="primary.600"
+      boxShadow="video-orange"
       onClick={onPlay}
       {...props}
     >

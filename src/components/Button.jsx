@@ -9,21 +9,16 @@ function Button({
   disabled = false,
   ...props
 }) {
-  // Icon to display - use provided iconElement or default ArrowLeft from Phosphor Icons
   const iconComponent = icon
-    ? iconElement || <ArrowLeft size={20} weight="regular" />
+    ? iconElement || <ArrowLeft size={20} weight="bold" />
     : null
-
-  const customStyles = {
-    gap: icon ? "8px" : "0",
-    textStyle: "headlineSemibold",
-  }
 
   return (
     <ChakraButton
       variant={variant}
       disabled={disabled}
-      {...customStyles}
+      gap={icon ? '8px' : '0'}
+      textStyle="headlineBold"
       {...props}
     >
       {iconComponent}
@@ -33,4 +28,3 @@ function Button({
 }
 
 export default Button
-

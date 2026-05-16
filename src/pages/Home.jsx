@@ -1,40 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Box, Heading, Flex, VStack, Text } from '@chakra-ui/react'
-import { keyframes } from '@emotion/react'
 import Chip from '../components/Chip'
 import IngredientSearch from '../components/IngredientSearch'
 import MobileSearchOverlay from '../components/MobileSearchOverlay'
 import Button from '../components/Button'
 import { removeEmojiFromIngredient, ingredientsToUrlParam } from '../utils/ingredients'
 import { POPULAR_INGREDIENTS } from '../data/ingredients'
-import foodPng from '../assets/images/food.png'
+import VeggieStickers from '../components/VeggieStickers'
 
-const spin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`
+const CONTENT_MAX_W = '40.5rem'
 
-const blink = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-`
-
-const PHRASES = [
-  'What for dinner?',
-  'Pizza for one',
-  'Winner winner chicken dinner',
-  'Pasta for two',
-]
-
-const TYPING_SPEED = 70
-const ERASING_SPEED = 40
-const PAUSE_AFTER_TYPE = 300
-const PAUSE_BEFORE_NEXT = 300
-
-const FOOD_IMAGE_SIZE = '80px'
-const FOOD_SPIN_DURATION = '8s'
-const CURSOR_BLINK_SPEED = '0.8s'
+const PHRASES = ['What for dinner?', 'Pizza for one?', 'Pasta for two?', 'Chicken dinner?']
+const TYPING_SPEED    = 70    // ms per character typed
+const DELETE_SPEED    = 35    // ms per character deleted
+const PAUSE_AFTER_TYPED   = 1800  // ms pause when phrase is complete
+const PAUSE_AFTER_DELETED = 350   // ms pause before next phrase begins
 
 function Home() {
   const navigate = useNavigate()
@@ -42,42 +23,33 @@ function Home() {
   const [error, setError] = useState(null)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
 
-  const [phraseIdx, setPhraseIdx] = useState(0)
-  const [displayed, setDisplayed] = useState('')
-  const [isErasing, setIsErasing] = useState(false)
+  const [phraseIndex, setPhraseIndex] = useState(0)
+  const [displayText, setDisplayText] = useState('')
+  const [typingPhase, setTypingPhase] = useState('typing') // 'typing' | 'deleting'
 
   useEffect(() => {
-    const current = PHRASES[phraseIdx]
+    const phrase = PHRASES[phraseIndex]
+    let timer
 
-    if (!isErasing && displayed.length < current.length) {
-      const t = setTimeout(
-        () => setDisplayed(current.slice(0, displayed.length + 1)),
-        TYPING_SPEED
-      )
-      return () => clearTimeout(t)
+    if (typingPhase === 'typing') {
+      if (displayText.length < phrase.length) {
+        timer = setTimeout(() => setDisplayText(phrase.slice(0, displayText.length + 1)), TYPING_SPEED)
+      } else {
+        timer = setTimeout(() => setTypingPhase('deleting'), PAUSE_AFTER_TYPED)
+      }
+    } else {
+      if (displayText.length > 0) {
+        timer = setTimeout(() => setDisplayText(displayText.slice(0, -1)), DELETE_SPEED)
+      } else {
+        timer = setTimeout(() => {
+          setPhraseIndex((i) => (i + 1) % PHRASES.length)
+          setTypingPhase('typing')
+        }, PAUSE_AFTER_DELETED)
+      }
     }
 
-    if (!isErasing && displayed.length === current.length) {
-      const t = setTimeout(() => setIsErasing(true), PAUSE_AFTER_TYPE)
-      return () => clearTimeout(t)
-    }
-
-    if (isErasing && displayed.length > 0) {
-      const t = setTimeout(
-        () => setDisplayed(current.slice(0, displayed.length - 1)),
-        ERASING_SPEED
-      )
-      return () => clearTimeout(t)
-    }
-
-    if (isErasing && displayed.length === 0) {
-      const t = setTimeout(() => {
-        setPhraseIdx((i) => (i + 1) % PHRASES.length)
-        setIsErasing(false)
-      }, PAUSE_BEFORE_NEXT)
-      return () => clearTimeout(t)
-    }
-  }, [displayed, isErasing, phraseIdx])
+    return () => clearTimeout(timer)
+  }, [displayText, typingPhase, phraseIndex])
 
   const toggleIngredient = (ingredient) => {
     setSelectedIngredients((prev) =>
@@ -85,21 +57,15 @@ function Home() {
         ? prev.filter((item) => item !== ingredient)
         : [...prev, ingredient]
     )
-    // Clear error when user changes selection
     if (error) setError(null)
   }
 
   const handleCook = () => {
-    // Validate selection
     if (selectedIngredients.length === 0) {
       setError('Please select at least one ingredient')
       return
     }
-
-    // Remove emojis from ingredients for API call
     const cleanIngredients = selectedIngredients.map(removeEmojiFromIngredient)
-    
-    // Navigate to results immediately - loading will happen there
     const ingredientsParam = ingredientsToUrlParam(cleanIngredients)
     navigate(`/results?ingredients=${ingredientsParam}`, {
       state: {
@@ -123,54 +89,37 @@ function Home() {
       px={{ base: '4' }}
       overflowY="auto"
     >
+      <VeggieStickers />
       {/* Main content — vertically centered in available space */}
       <Flex
         flex="1"
         w="100%"
-        maxW="40.5rem"
+        maxW={CONTENT_MAX_W}
         alignItems="center"
         justifyContent="center"
         py={{ base: '5', md: '10' }}
+        position="relative"
+        zIndex="2"
       >
         <VStack gap="20" w="100%">
-          <VStack gap="4" align="center">
+          <Heading
+            as="h1"
+            textStyle="heading"
+            fontSize={{ base: '32px', md: '40px' }}
+            lineHeight={{ base: '40px', md: '48px' }}
+            textAlign="center"
+            color="neutral.ink"
+          >
+            {displayText}
             <Box
-              as="img"
-              src={foodPng}
-              alt=""
-              w={FOOD_IMAGE_SIZE}
-              h={FOOD_IMAGE_SIZE}
-              animation={`${spin} ${FOOD_SPIN_DURATION} linear infinite`}
-            />
-            <Heading
-              as="h1"
-              textStyle="heading"
-              textAlign="center"
-              color="neutral.ink"
-              h="80px"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              sx={{
-                '@media (max-width: 47.9375rem)': {
-                  textStyle: 'title2',
-                  height: '48px',
-                },
-                '@media (max-width: 29.9375rem)': {
-                  textStyle: 'title1',
-                  height: '56px',
-                },
-              }}
+              as="span"
+              aria-hidden
+              ml="1px"
+              animation="cursor-blink 1s step-end infinite"
             >
-              {displayed}
-              <Box
-                as="span"
-                animation={`${blink} ${CURSOR_BLINK_SPEED} step-start infinite`}
-              >
-                |
-              </Box>
-            </Heading>
-          </VStack>
+              |
+            </Box>
+          </Heading>
 
           <VStack gap="4" w="100%" align="stretch">
             {/* Desktop: inline search with dropdown */}
@@ -186,8 +135,9 @@ function Home() {
               display={{ base: 'flex', md: 'none' }}
               bg="white"
               border="1px solid"
-              borderColor="neutral.border"
+              borderColor="primary.600"
               borderRadius="lg"
+              boxShadow="shadow-md"
               px="4"
               py="3"
               minH="52px"
@@ -196,8 +146,6 @@ function Home() {
               gap="2"
               cursor="text"
               onClick={() => setIsMobileSearchOpen(true)}
-              _hover={{ borderColor: 'primary.100' }}
-              transition="border-color 0.2s ease"
             >
               {selectedIngredients.length === 0 ? (
                 <Text textStyle="subheadMedium" color="grey.400">
@@ -242,10 +190,12 @@ function Home() {
       {/* Bottom section — pinned to bottom, button never moves */}
       <VStack
         w="100%"
-        maxW="40.5rem"
+        maxW={CONTENT_MAX_W}
         gap="4"
         pb={{ base: '8', md: '12' }}
         align="center"
+        position="relative"
+        zIndex="2"
       >
         {/* Error — space always reserved so button stays put */}
         <Box
@@ -280,12 +230,11 @@ function Home() {
           maxW={{ base: '60' }}
           onClick={handleCook}
           disabled={selectedIngredients.length === 0}
-          opacity={selectedIngredients.length === 0 ? 0.6 : 1}
         >
           Let's cook!
         </Button>
       </VStack>
-      {/* Mobile search overlay */}
+
       {isMobileSearchOpen && (
         <MobileSearchOverlay
           selectedIngredients={selectedIngredients}
@@ -298,4 +247,3 @@ function Home() {
 }
 
 export default Home
-

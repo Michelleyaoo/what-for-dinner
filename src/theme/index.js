@@ -20,6 +20,7 @@ const config = defineConfig({
           '300': { value: '#ffb86b' },
           '400': { value: '#ffa850' },
           '500': { value: '#b55c00' },
+          '600': { value: '#5b2e00' },
         },
         // Greyscale
         grey: {
@@ -49,6 +50,14 @@ const config = defineConfig({
       shadows: {
         card: { value: '0 2px 8px rgba(0, 0, 0, 0.1)' },
         cardHover: { value: '0 4px 16px rgba(0, 0, 0, 0.1)' },
+        'card-peach': { value: '6px 6px 0px 0px #fddcb9' },
+        'card-orange': { value: '12px 12px 0px 0px #ffc78c' },
+        'video-orange': { value: '6px 6px 0px 0px #ffc78c' },
+        'shadow-md': { value: '4px 4px 0 var(--chakra-colors-primary-600)' },
+        'shadow-md-active': { value: '2px 2px 0 var(--chakra-colors-primary-600)' },
+        'shadow-md-secondary': { value: '4px 4px 0 var(--chakra-colors-primary-500)' },
+        'shadow-md-secondary-active': { value: '2px 2px 0 var(--chakra-colors-primary-500)' },
+        'shadow-sm': { value: '2px 2px 0 var(--chakra-colors-primary-600)' },
       },
     },
     textStyles: {
@@ -88,6 +97,14 @@ const config = defineConfig({
         value: {
           fontSize: '16px',
           fontWeight: '600',
+          lineHeight: '20px',
+          letterSpacing: '0',
+        },
+      },
+      headlineBold: {
+        value: {
+          fontSize: '16px',
+          fontWeight: '700',
           lineHeight: '20px',
           letterSpacing: '0',
         },
@@ -183,53 +200,74 @@ const config = defineConfig({
     recipes: {
       button: defineRecipe({
         base: {
-          fontFamily: `'Work Sans', sans-serif`,
-          fontWeight: '600',
+          fontFamily: 'body',
+          fontWeight: '700',
           borderRadius: 'sm',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.2s ease',
+          transition: 'box-shadow 0.1s ease, transform 0.1s ease, background 0.15s ease',
           cursor: 'pointer',
-          border: 'none',
           outline: 'none',
           _focusVisible: {
-            boxShadow: '0 0 0 3px rgba(255, 184, 107, 0.5)',
+            outline: '2px solid',
+            outlineColor: 'primary.300',
+            outlineOffset: '2px',
           },
         },
         variants: {
           variant: {
             primary: {
               bg: 'primary.200',
-              color: 'neutral.ink',
+              color: 'primary.600',
+              border: '1px solid',
+              borderColor: 'primary.600',
+              boxShadow: 'shadow-md',
               _hover: {
-                bg: 'primary.300',
+                bg: 'primary.100',
               },
               _active: {
-                bg: 'primary.400',
+                bg: 'primary.300',
+                boxShadow: 'shadow-md-active',
+                transform: 'translate(2px, 2px)',
               },
               _disabled: {
-                opacity: 0.3,
+                opacity: 0.4,
                 cursor: 'not-allowed',
                 pointerEvents: 'none',
               },
             },
             tertiary: {
-              bg: 'transparent',
+              bg: 'white',
               color: 'primary.500',
-              padding: '0',
-              minW: 'auto',
-              height: 'auto',
+              border: '1px solid',
+              borderColor: 'primary.500',
+              boxShadow: 'shadow-md-secondary',
               _hover: {
-                color: 'primary.300',
+                bg: 'primary.50',
               },
               _active: {
-                color: 'primary.400',
+                bg: 'primary.100',
+                boxShadow: 'shadow-md-secondary-active',
+                transform: 'translate(2px, 2px)',
               },
               _disabled: {
-                opacity: 0.3,
+                opacity: 0.4,
                 cursor: 'not-allowed',
                 pointerEvents: 'none',
+              },
+            },
+            text: {
+              bg: 'transparent',
+              color: 'primary.500',
+              border: 'none',
+              boxShadow: 'none',
+              px: '0',
+              _hover: {
+                color: 'primary.600',
+              },
+              _active: {
+                color: 'primary.600',
               },
             },
           },
@@ -251,7 +289,7 @@ const config = defineConfig({
       input: defineRecipe({
         base: {
           field: {
-            fontFamily: `'Work Sans', sans-serif`,
+            fontFamily: 'body',
             borderRadius: 'lg',
           },
         },
@@ -286,58 +324,40 @@ const config = defineConfig({
       tag: defineRecipe({
         base: {
           root: {
-            fontFamily: `'Work Sans', sans-serif`,
+            fontFamily: 'body',
             whiteSpace: 'nowrap',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            color: 'neutral.ink',
+            transition: 'background 0.15s ease',
+            color: 'primary.600',
+            border: '1px solid',
+            borderColor: 'primary.600',
+            boxShadow: 'shadow-sm',
+            px: '4',
+            py: '3',
+            borderRadius: 'md',
+            height: 'auto',
           },
         },
         variants: {
           default: {
             root: {
               bg: 'primary.50',
-              border: '1px solid',
-              borderColor: 'primary.100',
-              _hover: {
-                bg: 'neutral.borderHover',
-                borderColor: 'primary.200',
-              },
+              _hover: { bg: 'primary.100' },
             },
           },
           selected: {
             root: {
               bg: 'primary.100',
-              border: 'none',
-              color: 'primary.500',
-              _hover: {
-                bg: 'primary.300',
-              },
+              _hover: { bg: 'primary.200' },
             },
           },
         },
         sizes: {
           sm: {
-            root: {
-              px: '3',
-              py: '1.5',
-              borderRadius: 'md',
-              height: 'auto',
-            },
-            label: {
-              textStyle: 'subheadMedium',
-            },
+            label: { textStyle: 'subheadSemibold' },
           },
           md: {
-            root: {
-              px: '4',
-              py: '3',
-              borderRadius: 'md',
-              height: 'auto',
-            },
-            label: {
-              textStyle: 'headlineMedium',
-            },
+            label: { textStyle: 'headlineSemibold' },
           },
         },
         defaultVariants: {
@@ -348,7 +368,7 @@ const config = defineConfig({
       badge: defineRecipe({
         base: {
           root: {
-            fontFamily: `'Work Sans', sans-serif`,
+            fontFamily: 'body',
             display: 'inline-flex',
             alignItems: 'center',
             gap: '2',
@@ -388,6 +408,13 @@ const config = defineConfig({
       fontFamily: `'Work Sans', sans-serif`,
       WebkitFontSmoothing: 'antialiased',
       MozOsxFontSmoothing: 'grayscale',
+      backgroundImage: "url('/bg.svg')",
+      backgroundRepeat: 'repeat',
+      backgroundSize: '16px 16px',
+    },
+    '@keyframes cursor-blink': {
+      '0%, 100%': { opacity: 1 },
+      '50%': { opacity: 0 },
     },
     '#root': {
       width: '100%',
