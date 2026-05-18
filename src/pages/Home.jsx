@@ -81,7 +81,7 @@ function Home() {
 
   return (
     <Box
-      minH="100vh"
+      minH="100dvh"
       w="100%"
       display="flex"
       flexDirection="column"
@@ -192,7 +192,7 @@ function Home() {
         w="100%"
         maxW={CONTENT_MAX_W}
         gap="4"
-        pb={{ base: '25', md: '20' }}
+        pb={{ base: 'calc(80px + env(safe-area-inset-bottom, 0px))', md: '20' }}
         align="center"
         position="relative"
         zIndex="2"
