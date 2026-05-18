@@ -1,5 +1,4 @@
 import { Box } from '@chakra-ui/react'
-import { Global } from '@emotion/react'
 import { useState, useCallback } from 'react'
 
 import tomatoImg   from '../assets/images/veggie-stickers/veggieSticker-tomato.png'
@@ -15,15 +14,15 @@ const WIGGLE_ANIMATION = 'sticker-wiggle 0.5s ease'
 
 const STICKERS = [
   { src: tomatoImg,   top: '8%',     left: '8%',    rotate: -15 },
-  { src: onionImg,    top: '5%',     right: '8%',   rotate: 12  },
-  { src: eggplantImg, top: '38%',    left: '13%',    rotate: 10  },
-  { src: avocadoImg,  top: '45%',    right: '14%',   rotate: -8  },
-  { src: cabbageImg,  bottom: '10%', left: '7%',    rotate: 12  },
-  { src: appleImg,    bottom: '5%',  left: '70%',   rotate: -10 },
-  { src: radishImg,   bottom: '2%',  right: '4%',   rotate: 16  },
+  { src: onionImg,    top: '15%',     right: '18%',   rotate: 12, size: '120px' },
+  { src: eggplantImg, top: '38%',    left: '13%',   rotate: 10, size: '120px' },
+  { src: avocadoImg,  top: '35%',    right: '10%',  rotate: -8  },
+  { src: cabbageImg,  bottom: '10%', left: '7%',    rotate: 12,  size: '128px' },
+  { src: appleImg,    bottom: '25%',  left: '75%',   rotate: -10, size: '128px' },
+  { src: radishImg,   bottom: '5%',  right: '5%',   rotate: 16, size: '128px'  },
 ]
 
-function Sticker({ src, top, left, right, bottom, rotate: baseRotate }) {
+function Sticker({ src, top, left, right, bottom, rotate: baseRotate, size }) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOrigin, setDragOrigin] = useState({ x: 0, y: 0 })
@@ -94,18 +93,6 @@ function Sticker({ src, top, left, right, bottom, rotate: baseRotate }) {
 function VeggieStickers() {
   return (
     <>
-      {/* Inject keyframe once globally so inline-style animation names resolve */}
-      <Global styles={`
-        @keyframes sticker-wiggle {
-          0%   { transform: rotate(0deg);  }
-          20%  { transform: rotate(-8deg); }
-          40%  { transform: rotate(8deg);  }
-          60%  { transform: rotate(-5deg); }
-          80%  { transform: rotate(5deg);  }
-          100% { transform: rotate(0deg);  }
-        }
-      `} />
-
       {/* Hidden on mobile — stickers overlap content on narrow viewports */}
       <Box
         display={{ base: 'none', md: 'block' }}

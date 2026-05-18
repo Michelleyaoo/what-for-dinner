@@ -13,6 +13,7 @@ An AI-powered recipe discovery app that suggests meals based on the ingredients 
 - **Recipe images** — Automatic image lookup via TheMealDB with Unsplash fallback
 - **Video tutorials** — YouTube Shorts carousel on each recipe detail page
 - **Multi-layer caching** — Client-side `sessionStorage` cache + optional server-side Redis (Upstash) for cross-user caching with 24h TTL
+- **Scrapbook aesthetic** — Grid background, draggable veggie stickers, and playful typography give the home page a handcrafted feel
 - **Responsive design** — Mobile-first layout that adapts from 1-column to 4-column recipe grids
 - **Skeleton loading states** — Animated placeholders while content loads
 - **Storybook** — Component library with interactive docs and visual testing
@@ -140,10 +141,12 @@ what-for-dinner/
 │   │   ├── Image.jsx           # Recipe image with gradient fallback
 │   │   ├── IngredientSearch.jsx# Searchable ingredient picker
 │   │   ├── Label.jsx           # Ingredient label (Available / Missing)
+│   │   ├── MobileSearchOverlay.jsx # Full-screen ingredient search for mobile
 │   │   ├── RecipeCard.jsx      # Recipe card for result grid
 │   │   ├── RecipeCardSkeleton.jsx
 │   │   ├── RecipeDetailSkeleton.jsx
 │   │   ├── ShortVideo.jsx      # Video thumbnail card
+│   │   ├── VeggieStickers.jsx  # Draggable, animated sticker decorations
 │   │   └── *.stories.jsx       # Storybook stories
 │   ├── data/
 │   │   └── ingredients.js      # 80+ ingredients with emoji mappings

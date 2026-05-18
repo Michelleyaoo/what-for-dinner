@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Box, VStack, Text } from '@chakra-ui/react'
-import Lottie from 'lottie-react'
+import { VStack, Text } from '@chakra-ui/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import rootVegetable from '../assets/animations/veg/root-vegetable.json'
+import StickerBounce from './StickerBounce'
 
 const MESSAGES = [
   'Confirming your ingredients...',
   'Finding delicious recipes...',
   'Almost there...',
 ]
-
-const MotionBox = motion(Box)
 
 function RecipeSearchLoading() {
   const [messageIndex, setMessageIndex] = useState(0)
@@ -24,31 +21,14 @@ function RecipeSearchLoading() {
 
   return (
     <VStack
-      spacing="10"
+      gap="6"
       align="center"
       justify="center"
       py={{ base: '20', md: '32' }}
       w="100%"
     >
-      {/* Animated food illustration */}
-      <MotionBox
-        animate={{ y: [0, -14, 0] }}
-        transition={{
-          duration: 0.9,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        w={{ base: '130px', md: '160px' }}
-        h={{ base: '130px', md: '160px' }}
-      >
-        <Lottie
-          animationData={rootVegetable}
-          loop
-          style={{ width: '100%', height: '100%' }}
-        />
-      </MotionBox>
+      <StickerBounce size="150px" />
 
-      {/* Cycling progress messages */}
       <AnimatePresence mode="wait">
         <motion.div
           key={messageIndex}
@@ -58,8 +38,8 @@ function RecipeSearchLoading() {
           transition={{ duration: 0.35 }}
         >
           <Text
-            textStyle="bodyRegular"
-            color="grey.600"
+            textStyle="headlineMedium"
+            color="primary.600"
             textAlign="center"
           >
             {MESSAGES[messageIndex]}

@@ -192,7 +192,7 @@ function Home() {
         w="100%"
         maxW={CONTENT_MAX_W}
         gap="4"
-        pb={{ base: '8', md: '12' }}
+        pb={{ base: '16', md: '20' }}
         align="center"
         position="relative"
         zIndex="2"
@@ -226,8 +226,9 @@ function Home() {
         <Button
           variant="primary"
           icon={false}
-          w={{ base: '100%', md: '60' }}
-          maxW={{ base: '60' }}
+          w={{ base: '100%', md: '80' }}
+          py="6" //overriden for a bigger size button
+          maxW={{ base: '80' }}
           onClick={handleCook}
           disabled={selectedIngredients.length === 0}
         >
