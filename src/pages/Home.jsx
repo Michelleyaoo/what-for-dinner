@@ -192,7 +192,7 @@ function Home() {
         w="100%"
         maxW={CONTENT_MAX_W}
         gap="4"
-        pb={{ base: '16', md: '20' }}
+        pb={{ base: '25', md: '20' }}
         align="center"
         position="relative"
         zIndex="2"
