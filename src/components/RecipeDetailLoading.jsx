@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Box, VStack, Text, Container } from '@chakra-ui/react'
-import Lottie from 'lottie-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import Button from './Button'
-import cookingAnimation from '../assets/animations/food/cooking.json'
-import spaghettiAnimation from '../assets/animations/food/spaghetti.json'
-import steamingBowlAnimation from '../assets/animations/food/steaming-bowl.json'
-
-const FOOD_ANIMATIONS = [cookingAnimation, spaghettiAnimation, steamingBowlAnimation]
+import StickerBounce from './StickerBounce'
 
 const MESSAGES = [
   'Looking into recipe details...',
@@ -19,9 +14,6 @@ const MESSAGES = [
 function RecipeDetailLoading() {
   const navigate = useNavigate()
   const [messageIndex, setMessageIndex] = useState(0)
-  const [animation] = useState(
-    () => FOOD_ANIMATIONS[Math.floor(Math.random() * FOOD_ANIMATIONS.length)]
-  )
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -41,18 +33,12 @@ function RecipeDetailLoading() {
 
       <Container maxW="800px" px={{ base: '4', md: '10' }}>
         <VStack
-          spacing="6"
+          gap="6"
           align="center"
           justify="center"
           minH="80vh"
         >
-          <Box w={{ base: '200px', md: '240px' }} h={{ base: '200px', md: '240px' }}>
-            <Lottie
-              animationData={animation}
-              loop
-              style={{ width: '100%', height: '100%' }}
-            />
-          </Box>
+          <StickerBounce size="150px" />
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -63,8 +49,8 @@ function RecipeDetailLoading() {
               transition={{ duration: 0.35 }}
             >
               <Text
-                textStyle="bodyRegular"
-                color="grey.600"
+                textStyle="headlineMedium"
+                color="primary.600"
                 textAlign="center"
               >
                 {MESSAGES[messageIndex]}

@@ -416,6 +416,14 @@ const config = defineConfig({
       '0%, 100%': { opacity: 1 },
       '50%': { opacity: 0 },
     },
+    '@keyframes sticker-wiggle': {
+      '0%':   { transform: 'rotate(0deg)'  },
+      '20%':  { transform: 'rotate(-8deg)' },
+      '40%':  { transform: 'rotate(8deg)'  },
+      '60%':  { transform: 'rotate(-5deg)' },
+      '80%':  { transform: 'rotate(5deg)'  },
+      '100%': { transform: 'rotate(0deg)'  },
+    },
     '#root': {
       width: '100%',
       minHeight: '100vh',
