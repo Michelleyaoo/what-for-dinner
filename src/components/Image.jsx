@@ -30,43 +30,73 @@ function ImagePlaceholder({ h, props }) {
   )
 }
 
-function Image({ src, alt = "", ...props }) {
+function Image({ src, alt = "", attribution, ...props }) {
   const [imgError, setImgError] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
 
   if (src && !imgError) {
     return (
-      <Box
-        w="100%"
-        h="240px"
-        position="relative"
-        overflow="hidden"
-        {...props}
-      >
-        {!imgLoaded && (
-          <Skeleton
+      <Box w="100%">
+        <Box
+          w="100%"
+          h="240px"
+          position="relative"
+          overflow="hidden"
+          {...props}
+        >
+          {!imgLoaded && (
+            <Skeleton
+              position="absolute"
+              inset="0"
+              w="100%"
+              h="100%"
+            />
+          )}
+          <Box
+            as="img"
+            src={src}
+            alt={alt}
             position="absolute"
             inset="0"
             w="100%"
             h="100%"
+            objectFit="cover"
+            objectPosition="center"
+            pointerEvents="none"
+            opacity={imgLoaded ? 1 : 0}
+            transition="opacity 0.3s ease"
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
           />
+        </Box>
+        {attribution?.name && (
+          <Box
+            fontSize="12px"
+            color="grey.400"
+            mt="1.5"
+          >
+            Photo by{' '}
+            <Box
+              as="a"
+              href={`${attribution.profileUrl}?utm_source=what_for_dinner&utm_medium=referral`}
+              target="_blank"
+              rel="noopener noreferrer"
+              textDecoration="underline"
+            >
+              {attribution.name}
+            </Box>
+            {' '}on{' '}
+            <Box
+              as="a"
+              href="https://unsplash.com?utm_source=what_for_dinner&utm_medium=referral"
+              target="_blank"
+              rel="noopener noreferrer"
+              textDecoration="underline"
+            >
+              Unsplash
+            </Box>
+          </Box>
         )}
-        <Box
-          as="img"
-          src={src}
-          alt={alt}
-          position="absolute"
-          inset="0"
-          w="100%"
-          h="100%"
-          objectFit="cover"
-          objectPosition="center"
-          pointerEvents="none"
-          opacity={imgLoaded ? 1 : 0}
-          transition="opacity 0.3s ease"
-          onLoad={() => setImgLoaded(true)}
-          onError={() => setImgError(true)}
-        />
       </Box>
     )
   }

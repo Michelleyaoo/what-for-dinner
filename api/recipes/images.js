@@ -68,13 +68,17 @@ async function fetchFromMealDB(query) {
  * API Endpoint: Fetch images for recipes (non-blocking)
  * Method: POST
  * Body: { recipes: [{ id, title, imageSearchKeywords }] }
- * Returns: { images: { [recipeId]: imageUrl | null } }
+ * Returns: { images: { [recipeId]: imageUrl | null }, attributions: { [recipeId]: { name, profileUrl } | null } }
  *
  * Lookup cascade per recipe:
  *   1. Redis cache (24h) — skip all fetches if already resolved
  *   2. TheMealDB — tried with up to 3 progressively simpler queries
  *   3. Unsplash search — fallback for dishes TheMealDB doesn't recognise
  *   4. null — gradient placeholder shown in UI
+ *
+ * Cache format: Unsplash entries are stored as { url, name, profileUrl }.
+ * Old plain-string cache entries (TheMealDB or pre-attribution Unsplash) are
+ * handled gracefully by treating them as { url: value, name: null, profileUrl: null }.
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -84,24 +88,29 @@ export default async function handler(req, res) {
   const { recipes = [] } = req.body;
 
   if (recipes.length === 0) {
-    return res.status(200).json({ images: {} });
+    return res.status(200).json({ images: {}, attributions: {} });
   }
 
   const images = {};
+  const attributions = {};
+
   await Promise.all(
     recipes.map(async (recipe) => {
       const cacheKey = `image:${recipe.id}`;
 
-      // 1. Redis cache — only trust successful URLs, not nulls
+      // 1. Redis cache — handle both old plain-string and new object format
       const cached = await getFromServerCache(cacheKey);
       if (cached && cached !== 'null') {
         console.log(`Image cache hit for ${recipe.id}`);
-        images[recipe.id] = cached;
+        const parsed = typeof cached === 'object' ? cached : { url: cached, name: null, profileUrl: null };
+        images[recipe.id] = parsed.url;
+        attributions[recipe.id] = parsed.name ? { name: parsed.name, profileUrl: parsed.profileUrl } : null;
         return;
       }
 
       const title = recipe.title || '';
       let imageUrl = null;
+      let imageAttribution = null;
 
       // 2. TheMealDB — try progressively simpler queries until one matches
       const queries = mealDbQueries(title, recipe.imageSearchKeywords);
@@ -132,7 +141,14 @@ export default async function handler(req, res) {
             // same recipe always gets the same image, but different recipes
             // with similar keywords get varied images
             const hash = recipe.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-            imageUrl = results[hash % results.length]?.urls?.regular || null;
+            const photo = results[hash % results.length];
+            imageUrl = photo?.urls?.regular || null;
+            if (imageUrl) {
+              imageAttribution = {
+                name: photo.user?.name || null,
+                profileUrl: photo.user?.links?.html || null,
+              };
+            }
           }
         } catch (err) {
           console.warn(`Unsplash error for "${query}":`, err.message);
@@ -140,11 +156,17 @@ export default async function handler(req, res) {
       }
 
       images[recipe.id] = imageUrl;
+      attributions[recipe.id] = imageAttribution;
 
-      // Cache successful results so future requests skip both fetches
-      if (imageUrl) saveToServerCache(cacheKey, imageUrl).catch(() => {});
+      // Cache successful results — store attribution bundle for Unsplash, plain URL for TheMealDB
+      if (imageUrl) {
+        const cacheValue = imageAttribution
+          ? { url: imageUrl, name: imageAttribution.name, profileUrl: imageAttribution.profileUrl }
+          : imageUrl;
+        saveToServerCache(cacheKey, cacheValue).catch(() => {});
+      }
     })
   );
 
-  return res.status(200).json({ images });
+  return res.status(200).json({ images, attributions });
 }

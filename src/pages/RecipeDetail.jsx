@@ -18,6 +18,8 @@ function RecipeDetail() {
   const location = useLocation()
   const { id } = useParams()
   
+  const imageAttribution = location.state?.imageAttribution || null
+
   const [recipe, setRecipe] = useState(null)
   const [recipeDetails, setRecipeDetails] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -294,6 +296,7 @@ function RecipeDetail() {
               alt={fullRecipe.title}
               h="320px"
               borderRadius="lg"
+              attribution={imageAttribution}
             />
 
             {/* Recipe Info Section */}
