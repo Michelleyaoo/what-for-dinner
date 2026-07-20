@@ -1,42 +1,27 @@
 import { useState } from 'react'
 
-import appleImg    from '../assets/images/veggie-stickers/veggieSticker-apple.png'
-import avocadoImg  from '../assets/images/veggie-stickers/veggieSticker-avocado.png'
-import cabbageImg  from '../assets/images/veggie-stickers/veggieSticker-cabbage.png'
-import eggplantImg from '../assets/images/veggie-stickers/veggieSticker-eggplant.png'
-import onionImg    from '../assets/images/veggie-stickers/veggieSticker-onion.png'
-import orangeImg   from '../assets/images/veggie-stickers/veggieSticker-orange.png'
-import pepperImg   from '../assets/images/veggie-stickers/veggieSticker-pepper.png'
-import potatoImg   from '../assets/images/veggie-stickers/veggieSticker-potato.png'
-import pumpkinImg  from '../assets/images/veggie-stickers/veggieSticker-pumpkin.png'
-import radishImg   from '../assets/images/veggie-stickers/veggieSticker-raddish.png'
-import tomatoImg   from '../assets/images/veggie-stickers/veggieSticker-tomato.png'
-
-const STICKERS = [
-  appleImg, avocadoImg, cabbageImg, eggplantImg, onionImg,
-  orangeImg, pepperImg, potatoImg, pumpkinImg, radishImg, tomatoImg,
-]
+import { STICKER_ITEMS } from '../data/stickers'
 
 /**
  * Randomly picks a veggie sticker on mount and animates it with a
  * continuous wiggle + slight base tilt.
  *
  * Props:
- *   size  — image width (default '160px')
+ *   scale — multiplier on the sticker's base size (default 1)
  */
-function StickerBounce({ size = '160px' }) {
-  const [src]    = useState(() => STICKERS[Math.floor(Math.random() * STICKERS.length)])
+function StickerBounce({ scale = 1.2 }) {
+  const [item]   = useState(() => STICKER_ITEMS[Math.floor(Math.random() * STICKER_ITEMS.length)])
   const [rotate] = useState(() => Math.round((Math.random() * 10) - 5))
 
   return (
     // Base tilt layer — wiggle animates on top without transform conflict
     <div style={{ display: 'inline-block', transform: `rotate(${rotate}deg)` }}>
       <img
-        src={src}
+        src={item.src}
         alt=""
         draggable={false}
         style={{
-          width: size,
+          width: `${Math.round(item.size * scale)}px`,
           height: 'auto',
           display: 'block',
           animation: 'sticker-wiggle 0.6s ease infinite',

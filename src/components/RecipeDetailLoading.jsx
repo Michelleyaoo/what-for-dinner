@@ -38,7 +38,7 @@ function RecipeDetailLoading() {
           justify="center"
           minH="80vh"
         >
-          <StickerBounce size="150px" />
+          <StickerBounce />
 
           <AnimatePresence mode="wait">
             <motion.div

@@ -27,7 +27,7 @@ function RecipeSearchLoading() {
       py={{ base: '20', md: '32' }}
       w="100%"
     >
-      <StickerBounce size="150px" />
+      <StickerBounce />
 
       <AnimatePresence mode="wait">
         <motion.div
