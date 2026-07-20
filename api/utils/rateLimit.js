@@ -1,42 +1,66 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-let ratelimit = null;
+let burstLimiter = null;
+let dailyLimiter = null;
 
-function getRatelimit() {
-  if (ratelimit) return ratelimit;
+function getLimiters() {
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     return null;
   }
-  ratelimit = new Ratelimit({
-    redis: new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    }),
-    // 20 requests per 60-second sliding window per IP
-    limiter: Ratelimit.slidingWindow(20, '60 s'),
-    prefix: 'ratelimit',
+  if (burstLimiter && dailyLimiter) return { burstLimiter, dailyLimiter };
+
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
   });
-  return ratelimit;
+
+  // 5 requests per 60-second window — stops scripts, allows normal browsing
+  burstLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '60 s'),
+    prefix: 'ratelimit:burst',
+  });
+
+  // 30 requests per 24 hours — generous for real users, limits daily abuse
+  dailyLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(100, '24 h'),
+    prefix: 'ratelimit:daily',
+  });
+
+  return { burstLimiter, dailyLimiter };
 }
 
 /**
  * Check rate limit for the request IP.
- * Returns null if allowed, or a Response-ready object if blocked.
+ * Runs burst and daily checks in parallel.
+ * Returns null if allowed, or sends a 429 response if either limit is exceeded.
  */
 export async function checkRateLimit(req, res) {
-  const limiter = getRatelimit();
-  if (!limiter) return null;
+  const limiters = getLimiters();
+  if (!limiters) return null;
 
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'anonymous';
   try {
-    const { success, remaining, reset } = await limiter.limit(ip);
-    res.setHeader('X-RateLimit-Remaining', remaining);
-    res.setHeader('X-RateLimit-Reset', reset);
-    if (!success) {
+    const [burst, daily] = await Promise.all([
+      limiters.burstLimiter.limit(ip),
+      limiters.dailyLimiter.limit(ip),
+    ]);
+
+    res.setHeader('X-RateLimit-Remaining-Burst', burst.remaining);
+    res.setHeader('X-RateLimit-Remaining-Daily', daily.remaining);
+
+    if (!burst.success) {
       return res.status(429).json({
         error: 'Too many requests',
         message: 'Please wait a moment before trying again.',
+      });
+    }
+    if (!daily.success) {
+      return res.status(429).json({
+        error: 'Daily limit reached',
+        message: "You've reached the daily search limit. Come back tomorrow!",
       });
     }
   } catch (err) {

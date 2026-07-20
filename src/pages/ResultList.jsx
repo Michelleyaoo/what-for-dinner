@@ -20,6 +20,7 @@ function ResultList() {
   const [searchedIngredients, setSearchedIngredients] = useState([])
   const [searchContext, setSearchContext] = useState(null)
   const [recipeImages, setRecipeImages] = useState({})
+  const [recipeAttributions, setRecipeAttributions] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const isFetchingRef = useRef(false)
@@ -57,9 +58,10 @@ function ResultList() {
 
     getRecipeImages(
       recipesNeedingImages.map(r => ({ id: r.id, title: r.title, imageSearchKeywords: r.imageSearchKeywords }))
-    ).then(({ images }) => {
+    ).then(({ images, attributions = {} }) => {
       if (import.meta.env.DEV) console.log('🖼️ Images received:', images)
       setRecipeImages(prev => ({ ...prev, ...images }))
+      setRecipeAttributions(prev => ({ ...prev, ...attributions }))
     }).catch((err) => { if (import.meta.env.DEV) console.error('🖼️ Image fetch error:', err) })
   }
 
@@ -169,7 +171,8 @@ function ResultList() {
     navigate(`/recipe/${recipe.id}`, {
       state: {
         recipe: { ...recipe, imageUrl: recipeImages[recipe.id] || recipe.imageUrl },
-        searchContext
+        searchContext,
+        imageAttribution: recipeAttributions[recipe.id] || null
       }
     })
   }
