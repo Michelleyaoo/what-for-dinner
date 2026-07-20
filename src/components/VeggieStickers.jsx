@@ -1,26 +1,26 @@
 import { Box } from '@chakra-ui/react'
 import { useState, useCallback } from 'react'
 
-import tomatoImg   from '../assets/images/veggie-stickers/veggieSticker-tomato.png'
-import onionImg    from '../assets/images/veggie-stickers/veggieSticker-onion.png'
-import eggplantImg from '../assets/images/veggie-stickers/veggieSticker-eggplant.png'
-import avocadoImg  from '../assets/images/veggie-stickers/veggieSticker-avocado.png'
-import cabbageImg  from '../assets/images/veggie-stickers/veggieSticker-cabbage.png'
-import appleImg    from '../assets/images/veggie-stickers/veggieSticker-apple.png'
-import radishImg   from '../assets/images/veggie-stickers/veggieSticker-raddish.png'
+import { STICKER_ITEMS } from '../data/stickers'
 
-const STICKER_SIZE = '108px'
 const WIGGLE_ANIMATION = 'sticker-wiggle 0.5s ease'
 
-const STICKERS = [
-  { src: tomatoImg,   top: '8%',     left: '8%',    rotate: -15 },
-  { src: onionImg,    top: '15%',     right: '18%',   rotate: 12, size: '120px' },
-  { src: eggplantImg, top: '38%',    left: '13%',   rotate: 10, size: '120px' },
-  { src: avocadoImg,  top: '35%',    right: '10%',  rotate: -8  },
-  { src: cabbageImg,  bottom: '10%', left: '7%',    rotate: 12,  size: '128px' },
-  { src: appleImg,    bottom: '25%',  left: '75%',   rotate: -10, size: '128px' },
-  { src: radishImg,   bottom: '5%',  right: '5%',   rotate: 16, size: '128px'  },
+// Positions derived from Figma frame (1440×784px) — converted to %.
+// Order matches STICKER_ITEMS: apple, avocado, eggplant, orange, potato, tomato.
+const STICKER_LAYOUT = [
+  { top: '10%',    left: '15%',  rotate: -12 },
+  { top: '44%',    left: '8%',   rotate: -5  },
+  { bottom: '3%',  left: '17%',  rotate: -20 },
+  { top: '29%',    right: '6%',  rotate: 17  },
+  { top: '15%',    right: '21%', rotate: 10  },
+  { bottom: '19%', right: '11%', rotate: -10 },
 ]
+
+const STICKERS = STICKER_ITEMS.map(({ src, size }, i) => ({
+  src,
+  size: `${size}px`,
+  ...STICKER_LAYOUT[i],
+}))
 
 function Sticker({ src, top, left, right, bottom, rotate: baseRotate, size }) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -82,7 +82,7 @@ function Sticker({ src, top, left, right, bottom, rotate: baseRotate, size }) {
             src={src}
             alt=""
             draggable={false}
-            style={{ width: STICKER_SIZE, height: 'auto', display: 'block' }}
+            style={{ width: size, height: 'auto', display: 'block' }}
           />
         </div>
       </div>

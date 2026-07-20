@@ -2,32 +2,12 @@ import { useState, useEffect } from 'react'
 import { Box, Text } from '@chakra-ui/react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-import appleImg    from '../assets/images/veggie-stickers/veggieSticker-apple.png'
-import avocadoImg  from '../assets/images/veggie-stickers/veggieSticker-avocado.png'
-import cabbageImg  from '../assets/images/veggie-stickers/veggieSticker-cabbage.png'
-import eggplantImg from '../assets/images/veggie-stickers/veggieSticker-eggplant.png'
-import onionImg    from '../assets/images/veggie-stickers/veggieSticker-onion.png'
-import orangeImg   from '../assets/images/veggie-stickers/veggieSticker-orange.png'
-import pepperImg   from '../assets/images/veggie-stickers/veggieSticker-pepper.png'
-import potatoImg   from '../assets/images/veggie-stickers/veggieSticker-potato.png'
-import pumpkinImg  from '../assets/images/veggie-stickers/veggieSticker-pumpkin.png'
-import radishImg   from '../assets/images/veggie-stickers/veggieSticker-raddish.png'
-import tomatoImg   from '../assets/images/veggie-stickers/veggieSticker-tomato.png'
+import { STICKER_ITEMS, SPLASH_SCALE } from '../data/stickers'
 
-// Sizes are 1.2× the home page sticker sizes
-const STICKERS = [
-  { src: appleImg,    size: '120px' },
-  { src: avocadoImg,  size: '106px' },
-  { src: cabbageImg,  size: '154px' },
-  { src: eggplantImg, size: '130px' },
-  { src: onionImg,    size: '120px' },
-  { src: orangeImg,   size: '120px' },
-  { src: pepperImg,   size: '115px' },
-  { src: potatoImg,   size: '125px' },
-  { src: pumpkinImg,  size: '144px' },
-  { src: radishImg,   size: '120px' },
-  { src: tomatoImg,   size: '130px' },
-]
+const STICKERS = STICKER_ITEMS.map(({ src, size }) => ({
+  src,
+  size: `${Math.round(size * SPLASH_SCALE)}px`,
+}))
 
 const COPY         = 'Ready for dinner?'
 const TYPING_SPEED = 60    // ms per character

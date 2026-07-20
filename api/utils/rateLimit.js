@@ -18,14 +18,14 @@ function getLimiters() {
   // 5 requests per 60-second window — stops scripts, allows normal browsing
   burstLimiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(5, '60 s'),
+    limiter: Ratelimit.slidingWindow(10, '60 s'),
     prefix: 'ratelimit:burst',
   });
 
   // 30 requests per 24 hours — generous for real users, limits daily abuse
   dailyLimiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, '24 h'),
+    limiter: Ratelimit.slidingWindow(100, '24 h'),
     prefix: 'ratelimit:daily',
   });
 
